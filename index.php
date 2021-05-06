@@ -1,27 +1,11 @@
 <?php
 
-// Or, using an anonymous function
-spl_autoload_register(function ($class) {
-    include 'classes/' . $class . '.class.php';
-});
-
-function dbg($msg, ...$var) {
-	//return;
-	echo $msg . " : " . print_r($var, true);
-}
-
-function asserts($desc, $expr, $expectedResult) {
-	if ($expr === $expectedResult) {
-		echo "PASS " . $desc . "\n";
-	} else {
-		echo "FAIL " . $desc . "\n";
-	}
-}
+require('./sys.php');
 
 echo "creating game\n";
 $play = new Game();
 
-$play = Game::load(Game::FILENAME); dbg('whole game', $play); die('...loaded...');
+//$play = Game::load(Game::FILENAME); dbg('whole game', $play); die('...loaded...');
 
 $play->startNewGame();
 $pid = $play->assignPlayer('marek');
@@ -33,7 +17,7 @@ for ($i = 0; $i < 103; $i++) {
 }
 
 $tbl = $play->getCurrentTableCopy();
-$plr = $play->getActivePlayerCopy($pid);
+$plr = $play->getPlayerCopy($pid);
 
 $newSet = Group::createSet( 
 	new Cards( $plr->getCardByType(Card::SPADES, 1), $plr->getCardByType(Card::SPADES, 2), $plr->getCardByType(Card::SPADES, 3) ) );
@@ -57,7 +41,7 @@ $play->save();
 
 
 $tbl = $play->getCurrentTableCopy();
-$plr = $play->getActivePlayerCopy($pid);
+$plr = $play->getPlayerCopy($pid);
 
 $newSet = Group::createSet( 
 	new Cards( $plr->getCardByType(Card::CLUBS, 1), $plr->getCardByType(Card::CLUBS, 2), $plr->getCardByType(Card::CLUBS, 3) ) );

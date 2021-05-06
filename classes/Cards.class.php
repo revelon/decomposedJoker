@@ -10,7 +10,7 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
 		//var_dump($this, 'ssdfsfsdfsdfsdfaaaa'); die();
     }
 
-    public function getCardByType(string $type, int $value) {
+    public function getCardByType(string $type, int $value) : ?Card {
     	foreach ($this->rows as $card) {
     		if ($card->type === $type && $card->value === $value) {
     			return $card;
@@ -18,7 +18,7 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
     	}
     }
 
-    public function getCardIds() {
+    public function getCardIds() : array {
 		$ids = [];
 		foreach ($this->rows as $card) {
 			$ids[] = $card->getId();
@@ -26,23 +26,26 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
     	return $ids;
     }
 
-    public function shuffle() {
+    public function shuffle() : void {
     	shuffle($this->rows);
     }
 
-    public function popCard() {
+    public function popCard() : Card {
     	return array_pop($this->rows);
     }
 
-    public function pushCard(Card $card) {
-    	return array_push($this->rows, $card);
+    public function pushCard(Card $card) : void {
+    	array_push($this->rows, $card);
     }
 
     // return difference between this set a given array of selected cards
-    public function getCardDiff(Cards $someCards) {
+    public function getCardDiff(Cards $someCards) : array {
     	return array_diff($this->rows, $someCards->rows);
     }
 
+    public function getCards() : array {
+        return $this->rows;
+    }
 
 
 

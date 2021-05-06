@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="cs">
+<head>
+	<meta charset="utf-8">
+	<title>Decomposed Joker GUI</title>
+	<link rel="icon" type="image/png" href="favicon.ashx">
+	<script>
+		// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+		// Example POST method implementation:
+		async function postData(data = {}) {
+		  // Default options are marked with *
+		  const response = await fetch('api.php', {
+		    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+		    mode: 'cors', // no-cors, *cors, same-origin
+		    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+		    credentials: 'same-origin', // include, *same-origin, omit
+		    headers: {
+		      'Content-Type': 'application/json'
+		      // 'Content-Type': 'application/x-www-form-urlencoded',
+		    },
+		    redirect: 'follow', // manual, *follow, error
+		    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+		    body: JSON.stringify(data) // body data type must match "Content-Type" header
+		  });
+		  const ret = await response.json(); // parses JSON response into native JavaScript objects
+		  return ret.data;
+		}
+
+		var game;
+		var playerId;
+		var hand;
+
+		async function initGame() {
+			window.game = await postData({ action: 'initGame' });
+			console.log('initGame', window.game);
+		}
+
+		async function registerPlayer(name) {
+			window.playerId = await postData({ action: 'registerPlayer', 'name': name });
+			console.log('registerPlayer', window.playerId);
+		}
+
+		async function getHand() {
+			window.hand = await postData({ action: 'getHand', 'playerId': window.playerId });
+			console.log('getHand', window.hand);
+		}
+
+	</script>
+</head>
+<body>
+
+<h1>Decomposed Joker GUI</h1>
+
+<button onclick='initGame()'>Init Game</button>
+<button onclick='registerPlayer("marek")'>registerPlayer</button>
+<button onclick='getHand()'>getHand</button>
+</body>
+</html>

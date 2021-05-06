@@ -5,8 +5,8 @@ class Game {
 	private $allCardIds = [];	
 	private $deck = null;
 	private $table = null;
-	private $activePlayer = "";
-	const FILENAME = './aaaaa';
+	private $activePlayer = '';
+	const FILENAME = 'store/aaaaaa.data';
 
 	function __construct() {
 	}
@@ -38,10 +38,8 @@ class Game {
 		$this->activePlayer = $id;
 	}
 
-	public function getActivePlayerCopy(string $id) {
-		if ($id === $this->activePlayer) {
-			return clone $this->players[$id];
-		}
+	public function getPlayerCopy(string $id) {
+		return clone $this->players[$id];
 	}
 
 	public function doTurnAsGetCard(string $id) {

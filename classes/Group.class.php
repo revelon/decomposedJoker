@@ -16,14 +16,6 @@ class Group extends Cards {
 		}
 	}
 
-	public function getCardIds() {
-		$ret = [];
-		foreach ($this->rows as $card) {
-			$ret[] = $card->getId();
-		}
-		return $ret;
-	}
-
 	public static function validate(Cards $newSet) {
 		dbg('validating', $newSet);
 
