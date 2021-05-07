@@ -18,7 +18,7 @@ class Game {
 		$this->allCardIds = $this->deck->getCardIds();
 	}
 
-	public function assignPlayer(string $name) {
+	public function assignPlayer(string $name) : string {
 		$n = new Player($name);
 		$n->addCardToHand($this->deck->popCard());
 		$n->addCardToHand($this->deck->popCard());
@@ -30,28 +30,29 @@ class Game {
 		return $n->getId();
 	}
 
-	public function getCurrentTableCopy() {
+	public function getCurrentTableCopy() : Table {
 		return clone $this->table;
 	}
 
-	public function setActivePlayer(string $id) {
+	public function setActivePlayer(string $id) : void {
 		$this->activePlayer = $id;
 	}
 
-	public function getPlayerCopy(string $id) {
+	public function getPlayerCopy(string $id) : Player {
 		return clone $this->players[$id];
 	}
 
-	public function doTurnAsGetCard(string $id) {
+	public function doTurnAsGetCard(string $id) : bool {
 		if ($id !== $this->activePlayer) {
 			return false;
 		}
 		$this->players[$id]->addCardToHand($this->deck->popCard());
 		dbg("player's hand", $this->players[$id]->getHand());
-		$this->nextPlayerTurn();
+		$this->nextPlayerTurn(); //var_dump($id, $this->activePlayer, sizeOf($deck)); die;
+		return true;
 	}
 
-	public function doTurnAsTableChange(string $id, Table $newTable, Cards $newHand) {
+	public function doTurnAsTableChange(string $id, Table $newTable, Cards $newHand) : bool {
 		// only active player is allowed to make changes
 		if ($id !== $this->activePlayer) {
 			echo "not current/active player is forbidden to play\n";
@@ -108,7 +109,7 @@ class Game {
 	}
 
 	// todo: probably needs some refactoring
-	private function nextPlayerTurn() {
+	private function nextPlayerTurn() : string {
 		foreach ($this->players as $id => $player) {
 			if ($id === $this->activePlayer) {
 				$next = next($this->players);
@@ -124,30 +125,31 @@ class Game {
 		}
 	}
 
-	public function gameOver(string $id) {
+	public function gameOver(string $id) : void {
 		echo "Player " . $this->players[$id]->getName() . " wins!!";
 	}
 
-	public function save() {
+	public function save() : bool {
 		$me = file_put_contents(self::FILENAME, serialize($this));
-		dbg('saving', $me);		
+		dbg('saving', $me);
+		return (bool) $me;
 	}
 
-	public static function load(string $gameId) {
+	public static function load(string $gameId) : Game {
 		dbg('loading');
 		return unserialize(file_get_contents($gameId));
 	}
 
-	public function getTable() {
+	public function getTable() : Table {
 		return $this->table;
 	}
 
 	// shoudl not be necessary!!! delete it later
-	public function getDeck() {
+	public function getDeck() : Cards{
 		return $this->deck;
 	}
 
-	private function createDeck() {
+	private function createDeck() : Cards {
 		$deck = new Cards(
 			new Card(0, Card::WILD),
 			new Card(0,	Card::WILD),

@@ -35,8 +35,34 @@ switch ($data->action) {
 		ob_end_clean();
 		echo json_encode( [ 'data' => $hand ] );
 		break;
-
+	case "getCard":
+		$play = new Game();
+		$play = Game::load(Game::FILENAME);
+		if ($play->doTurnAsGetCard($data->playerId)) {
+			$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCards();
+			ob_end_clean();
+			echo json_encode( [ 'data' => $hand ] );
+			$play->save();			
+		} else {
+			ob_end_clean();
+			http_response_code(403);
+			echo json_encode( [ 'message' => 'Player is not allowed to get card.' ] ); // different errors should happen
+		}
+		break;
+	case "validateGroup":
+		$newSet = new Cards();
+		foreach ($data->cards as $c) {
+			$newSet->pushCard(new Card($c->value, $c->type, $c->id));
+		}
+		if (Group::validate($newSet)) {
+			ob_end_clean();
+			echo json_encode( [ 'data' => true ] );
+			$play->save();			
+		} else {
+			ob_end_clean();
+			http_response_code(403);
+			echo json_encode( [ 'message' => 'Card set is invalid' ] );
+		}
+		break;
 }
-
-//var_dump($data);
 

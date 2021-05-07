@@ -5,12 +5,12 @@ spl_autoload_register(function ($class) {
     include 'classes/' . $class . '.class.php';
 });
 
-function dbg($msg, ...$var) {
-	//return;
+function dbg(string $msg, ...$var) : void {
+	return;
 	echo $msg . " : " . print_r($var, true);
 }
 
-function asserts($desc, $expr, $expectedResult) {
+function asserts(string $desc, $expr, bool $expectedResult) : void {
 	if ($expr === $expectedResult) {
 		echo "PASS " . $desc . "\n";
 	} else {

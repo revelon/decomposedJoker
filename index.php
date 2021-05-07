@@ -14,7 +14,11 @@ $play->setActivePlayer($pid);
 // make very big hand
 for ($i = 0; $i < 103; $i++) {
 	$play->doTurnAsGetCard($pid);
+	$plr = $play->getPlayerCopy($pid);
+	var_dump(sizeOf($plr->getHand()));
 }
+
+//die("ugh");
 
 $tbl = $play->getCurrentTableCopy();
 $plr = $play->getPlayerCopy($pid);

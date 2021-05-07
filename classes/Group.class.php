@@ -16,7 +16,7 @@ class Group extends Cards {
 		}
 	}
 
-	public static function validate(Cards $newSet) {
+	public static function validate(Cards $newSet) : bool {
 		dbg('validating', $newSet);
 
 		// not enough cards
@@ -56,7 +56,7 @@ class Group extends Cards {
 			$curr = $values[$i];
 
 			dbg('iteration details', $values, $i, $prev, $curr);
-//die("dsdsdsddsdssdxx");
+
 			// two following jokers are never allowed
 			if ($prev === 0 && $curr === 0) {
 				return false;
@@ -98,7 +98,7 @@ class Group extends Cards {
 		return true;
 	}	
 
-	public static function tests() {
+	public static function tests() : void {
 
 		asserts("Not enough cards", 
 				Group::validate(new Cards( new Card(1, Card::SPADES), new Card(3, Card::SPADES) )), 
