@@ -4,6 +4,10 @@
 	<meta charset="utf-8">
 	<title>Decomposed Joker GUI</title>
 	<link rel="icon" type="image/png" href="favicon.ashx">
+	<style>
+		div {border: 1px dotted blue; margin: 4px;}
+		div.active {border: 2px solid red;}
+	</style>
 	<script>
 		// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
 		// Example POST method implementation:
@@ -34,6 +38,10 @@
 		var game;
 		var playerId;
 		var hand;
+		var table = [];
+		var actives = {};   // predelat na zasobnik !!!
+		var guiHand;
+		var guiTable;
 
 		async function initGame() {
 			try {
@@ -42,6 +50,10 @@
 			} catch (err) {
 				console.dir('err', err);
 			}
+			guiHand = document.getElementById('guiHand');
+			guiHand.innerHTML = '';
+			guiTable = document.getElementById('guiTable');
+			guiTable.innerHTML = '';
 		}
 
 		async function registerPlayer(name) {
@@ -53,12 +65,15 @@
 			}
 		}
 
-		async function getHand() {
+		async function getHand(render = false) {
 			try {
 				window.hand = await postData({ action: 'getHand', 'playerId': window.playerId });
 				console.dir('getHand', window.hand);
 			} catch (err) {
 				console.dir('err', err);
+			}
+			if (render) {
+				renderHand();
 			}
 		}
 
@@ -82,13 +97,61 @@
 
 		async function validateGroup(group) {
 			try {
-				const grp = await postData({ action: 'validateGroup', 'cards': window.hand });
+				const grp = await postData({ action: 'validateGroup', 'cards': group });
 				console.dir('validateGroup', grp);
+				// rework soon, let more groups to be prepared
+				if (grp) {
+					window.table.push(group);
+					Object.keys(grp).forEach(c => delete window.hand.c);  // ruka nemuze byt objekt, nedrzi poradi!! a delete moc nefunguje 
+					await doTableChange();
+				}
 			} catch (err) {
 				console.dir('err', err);
 			}
 		}
 
+		async function doTableChange() {
+			try {
+				const turn = await postData({ action: 'doTableChange', 'playerId': window.playerId, 'table': window.table, 'hand': window.hand });
+				console.dir('doTableChange', turn);
+			} catch (err) {
+				console.dir('err', err);
+			}
+		}
+
+
+		// non server interactive functions
+
+		function createEmptySet() {
+			window.set = {};
+		}
+
+		function renderHand() {
+			guiHand.innerHTML = '';
+			Object.values(hand).forEach(
+				(c) => {
+							const nl = el('div', c.id, `value:${c.value} - type:${c.type}`);
+							nl.addEventListener('click', (e) => activateCard(c.id));
+							window.guiHand.appendChild(nl);
+						}
+					);
+		}
+
+		function activateCard(id) {
+			if (window.actives[id]) {
+				delete window.actives.id;
+			} else {
+				window.actives[id] = window.hand[id];
+			}
+			document.getElementById(id).classList.toggle("active");
+		}
+
+		function el (element, id, htmlBody) {
+			let el = document.createElement(element);
+			el.innerHTML = htmlBody;
+			el.id = id;
+			return el;
+		}
 	</script>
 </head>
 <body>
@@ -97,8 +160,13 @@
 
 <button onclick='initGame()'>Init Game</button>
 <button onclick='registerPlayer("marek")'>registerPlayer</button>
-<button onclick='getHand()'>getHand</button>
+<button onclick='getHand(true)'>getHand and renderHand</button>
 <button onclick='getCard()'>getCard and end turn</button>
-<button onclick='validateGroup(1)'>validate group of cards as valid set/group</button>
+<button onclick='createEmptySet()'>create Empty Set</button>
+<button onclick='validateGroup(window.actives)'>validate active group of cards as valid set/group</button>
+
+<div id='guiHand'></div>
+<div id='guiTable'></div>
+
 </body>
 </html>

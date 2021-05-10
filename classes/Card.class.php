@@ -20,7 +20,7 @@ class Card implements \JsonSerializable {
 		return $this->id;
 	}
 
-  	public function __toString() {
+  	public function __toString() : string {
     	return $this->id;
   	}
 
@@ -30,6 +30,11 @@ class Card implements \JsonSerializable {
         	'value' => $this->value,
         	'type' => $this->type
     	] ;
+    }
+
+    public function getSortingValue() : int {
+    	$offset = ['spades' => 0, 'diamonds' => 20, 'clubs' => 40, 'hearts' => 60, 'wildcard' => 80];
+    	return (int) $this->value + $offset[$this->type];
     }
 
 }

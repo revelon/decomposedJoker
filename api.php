@@ -32,7 +32,7 @@ switch ($data->action) {
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCards();
-		ob_end_clean();
+		//ob_end_clean();
 		echo json_encode( [ 'data' => $hand ] );
 		break;
 	case "getCard":
@@ -42,7 +42,7 @@ switch ($data->action) {
 			$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCards();
 			ob_end_clean();
 			echo json_encode( [ 'data' => $hand ] );
-			$play->save();			
+			$play->save();
 		} else {
 			ob_end_clean();
 			http_response_code(403);
@@ -57,11 +57,35 @@ switch ($data->action) {
 		if (Group::validate($newSet)) {
 			ob_end_clean();
 			echo json_encode( [ 'data' => true ] );
-			$play->save();			
 		} else {
 			ob_end_clean();
 			http_response_code(403);
 			echo json_encode( [ 'message' => 'Card set is invalid' ] );
+		}
+		break;
+	case "doTableChange":
+		$hand = new Cards();
+		foreach ($data->hand as $c) {
+			$hand->pushCard(new Card($c->value, $c->type, $c->id));
+		}
+		$table = new Table();
+		foreach ($data->table as $grp) {
+			$newSet = new Cards();
+			foreach ($grp as $c) {
+				$newSet->pushCard(new Card($c->value, $c->type, $c->id));
+			}
+			$table[] = Group::createSet($newSet);
+		}
+		$play = new Game();
+		$play = Game::load(Game::FILENAME);
+		if ($play->doTurnAsTableChange($data->playerId, $table, $hand)) {
+			ob_end_clean();
+			echo json_encode( [ 'data' => true ] );
+			$play->save();
+		} else {
+			ob_end_clean();
+			http_response_code(403);
+			echo json_encode( [ 'message' => 'Table or player hand is invalid' ] );
 		}
 		break;
 }

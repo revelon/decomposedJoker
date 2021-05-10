@@ -36,6 +36,7 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
 
     public function pushCard(Card $card) : void {
     	array_push($this->rows, $card);
+        $this->sortCards();
     }
 
     // return difference between this set a given array of selected cards
@@ -43,8 +44,24 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
     	return array_diff($this->rows, $someCards->rows);
     }
 
-    public function getCards() : array {
-        return $this->rows;
+    private function sortCards() : void {
+        usort($this->rows, function (Card $a, Card $b) : int {
+            if ($a->getSortingValue() < $b->getSortingValue()) {
+                return -1;
+            } else if ($a->getSortingValue() > $b->getSortingValue()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+    }
+
+    public function getCards() : stdClass {
+        $obj = new stdClass();
+        foreach ($this->rows as $card) {
+            $obj->{$card->getId()} = $card;
+        }
+        return $obj;
     }
 
 
