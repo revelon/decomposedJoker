@@ -109,6 +109,9 @@ class Group extends Cards {
 		asserts("Valid three of a type with Joker", 
 				Group::validate(new Cards( new Card(10, Card::CLUBS), new Card(10, Card::SPADES), new Card(0, Card::WILD) )), 
 				true);
+		asserts("Valid another three of a type with Joker", 
+				Group::validate(new Cards( new Card(2, Card::HEARTS), new Card(0, Card::WILD), new Card(4, Card::HEARTS) )), 
+				true);
 		asserts("Valid four of a type", 
 				Group::validate(new Cards( new Card(10, Card::CLUBS), new Card(10, Card::SPADES), new Card(10, Card::DIAMONDS), new Card(10, Card::HEARTS) )), 
 				true);

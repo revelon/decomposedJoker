@@ -5,10 +5,13 @@
 	<title>Decomposed Joker GUI</title>
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
-		div {border: 1px dotted blue; margin: 4px;}
-		div.active {border: 2px solid red;}
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div { width: 100px; display: table-cell; background-color: beige; }
+		div {border: 2px dotted blue; margin: 4px; padding: 4px; }
+		div.active {border: 2px dotted red;}
 	</style>
 	<script>
+		"use strict";
+
 		// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
 		// Example POST method implementation:
 		async function postData(data = {}) {
@@ -35,23 +38,34 @@
 			}
 		}
 
-		var game;
-		var playerId;
-		var hand;
+		var allCards = {};
+		var playerId = '';
+		var hand = [];
+		var sets = [];
 		var table = [];
-		var actives = {};   // predelat na zasobnik !!!
+		var actives = [];
 		var guiHand;
+		var guiNewSets;
 		var guiTable;
 
 		async function initGame() {
 			try {
-				window.game = await postData({ action: 'initGame' });
-				console.dir('initGame', window.game);
+				const deck = await postData({ action: 'initGame' });
+				deck.forEach(c => window.allCards[c.id] = c);
+				//console.dir('initGame', window.allCards);
 			} catch (err) {
 				console.dir('err', err);
 			}
+
+			let hand = {};
+			hand.id = "0";
+			hand.cards = [];
+			window.hand.push(hand);
+
 			guiHand = document.getElementById('guiHand');
 			guiHand.innerHTML = '';
+			guiNewSets = document.getElementById('guiNewSets');
+			guiNewSets.innerHTML = '';			
 			guiTable = document.getElementById('guiTable');
 			guiTable.innerHTML = '';
 		}
@@ -67,29 +81,63 @@
 
 		async function getHand(render = false) {
 			try {
-				window.hand = await postData({ action: 'getHand', 'playerId': window.playerId });
+				window.hand[0].cards = await postData({ action: 'getHand', 'playerId': window.playerId });
 				console.dir('getHand', window.hand);
 			} catch (err) {
 				console.dir('err', err);
 			}
 			if (render) {
-				renderHand();
+				renderCardGroups(window.hand, guiHand);
 			}
 		}
 
 		async function getCard() {
 			try {
-				window.hand = await postData({ action: 'getCard', 'playerId': window.playerId });
+				window.hand[0].cards = await postData({ action: 'getCard', 'playerId': window.playerId });
 				console.dir('getCard', window.hand);
 			} catch (err) {
 				console.dir('err', err);
 			}
 		}
 
-		async function getCard() {
+		async function validateTurn() {
+			console.log("validating...");
+			// iterate through all new groups
+			for(const s in window.sets) {
+				console.log('group_id...', s);
+				let cards = [];
+				window.sets[s].cards.forEach( c => cards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
+				if (await validateGroup(cards)) {
+					console.log('great, valid set id:', s);
+				} else {
+					console.log('bad luck, invalid set id:', s);
+					return false;
+				}
+			}
+			// iterate through modified table TBD
+			for(const s in window.table) {
+				console.log('group_id...', s);
+				let cards = [];
+				window.table[s].cards.forEach( c => cards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
+				if (await validateGroup(cards)) {
+					console.log('great, valid set id:', s);
+				} else {
+					console.log('bad luck, invalid set id:', s);
+					return false;
+				}
+			}
+
 			try {
-				window.hand = await postData({ action: 'getCard', 'playerId': window.playerId });
-				console.dir('getCard', window.hand);
+				let newTbl = [];
+				for(const s in window.table) {
+					newTbl.push(window.table[s]);
+				}
+				for(const s in window.sets) {
+					newTbl.push(window.sets[s]);
+				}
+				console.dir('trying to do tableChange...', newTbl);
+				window.table = newTbl;
+				await doTableChange();
 			} catch (err) {
 				console.dir('err', err);
 			}
@@ -99,21 +147,28 @@
 			try {
 				const grp = await postData({ action: 'validateGroup', 'cards': group });
 				console.dir('validateGroup', grp);
-				// rework soon, let more groups to be prepared
-				if (grp) {
-					window.table.push(group);
-					Object.keys(grp).forEach(c => delete window.hand.c);  // ruka nemuze byt objekt, nedrzi poradi!! a delete moc nefunguje 
-					await doTableChange();
-				}
+				return grp;
 			} catch (err) {
 				console.dir('err', err);
+				return false;
 			}
 		}
 
 		async function doTableChange() {
 			try {
-				const turn = await postData({ action: 'doTableChange', 'playerId': window.playerId, 'table': window.table, 'hand': window.hand });
+				let handCards = [];
+				window.hand[0].cards.forEach( c => handCards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
+
+				let fullTable = [];
+				for(const s in window.table) {
+					console.log('group_id...', s);
+					let cardSet = [];
+					window.table[s].cards.forEach( c => cardSet.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
+					fullTable.push(cardSet);
+				}
+				const turn = await postData({ action: 'doTableChange', 'playerId': window.playerId, 'table': fullTable, 'hand': handCards });
 				console.dir('doTableChange', turn);
+				// do all loading and rendering, table etc.... !!!!
 			} catch (err) {
 				console.dir('err', err);
 			}
@@ -123,30 +178,66 @@
 		// non server interactive functions
 
 		function createEmptySet() {
-			window.set = {};
+			let set = {};
+			set.id = "s" + Math.random().toString(12).substring(2, 8);
+			set.cards = [];
+			console.dir(set);
+			window.sets[set.id] = set;
+			renderCardGroups(window.sets, guiNewSets);
 		}
 
-		function renderHand() {
-			guiHand.innerHTML = '';
-			Object.values(hand).forEach(
-				(c) => {
-							const nl = el('div', c.id, `value:${c.value} - type:${c.type}`);
-							nl.addEventListener('click', (e) => activateCard(c.id));
-							window.guiHand.appendChild(nl);
-						}
-					);
+		function renderCardGroups(groups, gui) {
+			console.dir('rendering', groups);
+			gui.innerHTML = '';
+			for(const s in groups) {
+				console.log('group_id', s);
+				const nl = el('div', s, `id: ${groups[s].id}`);
+				groups[s].cards.forEach( c => {
+					const card = renderCard(c);
+					card.addEventListener('click', (e) => activateCard(c), true);
+					nl.appendChild(card);
+				});
+				const butt = el('button', "act-" + s, '+');
+				butt.addEventListener('click', (e) => addActiveCardsToSet(s), true);
+				nl.appendChild(butt);
+				gui.appendChild(nl);
+			}
+		}
+
+		function addActiveCardsToSet(setId) {
+			console.log("set id", setId);
+			if (window.sets[setId]) {
+				window.sets[setId].cards = window.sets[setId].cards.concat(window.actives);
+			}
+			window.actives.forEach( a => {
+				const x = window.hand[0].cards.indexOf(a);
+				if (x > -1) {
+					window.hand[0].cards.splice(x, 1);
+				} else {
+					window.hand[0].cards.push(a);	
+				}
+			});
+			window.actives = [];
+			renderCardGroups(window.sets, guiNewSets);
+			renderCardGroups(window.hand, guiHand);
+		}
+
+		function renderCard(id) {
+			return el('div', id, `${window.allCards[id].value}<br>${window.allCards[id].type}`);
 		}
 
 		function activateCard(id) {
-			if (window.actives[id]) {
-				delete window.actives.id;
+			const x = window.actives.indexOf(id);
+			if (x > -1) {
+				window.actives.splice(x, 1);
 			} else {
-				window.actives[id] = window.hand[id];
+				window.actives.push(id)	
 			}
 			document.getElementById(id).classList.toggle("active");
+			event.stopPropagation();
 		}
 
-		function el (element, id, htmlBody) {
+		function el(element, id, htmlBody) {
 			let el = document.createElement(element);
 			el.innerHTML = htmlBody;
 			el.id = id;
@@ -163,10 +254,17 @@
 <button onclick='getHand(true)'>getHand and renderHand</button>
 <button onclick='getCard()'>getCard and end turn</button>
 <button onclick='createEmptySet()'>create Empty Set</button>
-<button onclick='validateGroup(window.actives)'>validate active group of cards as valid set/group</button>
-
+<button onclick='validateTurn()'>validate all groups of cards as except of hand</button>
+<hr>
+Hand:
 <div id='guiHand'></div>
+NewSets:
+<div id='guiNewSets'></div>
+Table
 <div id='guiTable'></div>
+<hr>
+ulozit si vse pred tahem a nabidnout undo !!
+
 
 </body>
 </html>

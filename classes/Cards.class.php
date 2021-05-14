@@ -56,12 +56,8 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
         });
     }
 
-    public function getCards() : stdClass {
-        $obj = new stdClass();
-        foreach ($this->rows as $card) {
-            $obj->{$card->getId()} = $card;
-        }
-        return $obj;
+    public function getCards() : array {
+        return $this->rows;
     }
 
 

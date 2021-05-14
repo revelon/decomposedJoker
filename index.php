@@ -11,7 +11,9 @@ $play->startNewGame();
 $pid = $play->assignPlayer('marek');
 $play->setActivePlayer($pid);
 
-var_dump($play->getPlayerCopy($pid)->getHand()); die("ughhh");
+//var_dump($play->getPlayerCopy($pid)->getHand()); die("ughhh");
+
+Group::tests(); die;
 
 // make very big hand
 for ($i = 0; $i < 103; $i++) {

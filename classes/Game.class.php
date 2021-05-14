@@ -144,8 +144,7 @@ class Game {
 		return $this->table;
 	}
 
-	// shoudl not be necessary!!! delete it later
-	public function getDeck() : Cards{
+	public function getDeck() : Cards {
 		return $this->deck;
 	}
 

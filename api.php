@@ -17,7 +17,7 @@ switch ($data->action) {
 		$play->startNewGame();
 		$play->save();
 		ob_end_clean();
-		echo json_encode( [ 'data' => Game::FILENAME ] );	// change later
+		echo json_encode( [ 'data' => $play->getDeck()->getCards() ] );
 		break;
 	case "registerPlayer":
 		$play = new Game();
@@ -31,7 +31,7 @@ switch ($data->action) {
 	case "getHand":
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
-		$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCards();
+		$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 		//ob_end_clean();
 		echo json_encode( [ 'data' => $hand ] );
 		break;
@@ -39,7 +39,7 @@ switch ($data->action) {
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		if ($play->doTurnAsGetCard($data->playerId)) {
-			$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCards();
+			$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 			ob_end_clean();
 			echo json_encode( [ 'data' => $hand ] );
 			$play->save();
@@ -55,12 +55,12 @@ switch ($data->action) {
 			$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 		}
 		if (Group::validate($newSet)) {
-			ob_end_clean();
-			echo json_encode( [ 'data' => true ] );
+			$stdout = ob_get_clean();
+			echo json_encode( [ 'data' => true, 'dbg' => $stdout ] );
 		} else {
-			ob_end_clean();
+			$stdout = ob_get_clean();
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Card set is invalid' ] );
+			echo json_encode( [ 'message' => 'Card set is invalid', 'dbg' => $stdout ] );
 		}
 		break;
 	case "doTableChange":
@@ -79,13 +79,13 @@ switch ($data->action) {
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		if ($play->doTurnAsTableChange($data->playerId, $table, $hand)) {
-			ob_end_clean();
-			echo json_encode( [ 'data' => true ] );
+			$stdout = ob_get_clean();
+			echo json_encode( [ 'data' => true, 'dbg' => $stdout ] );
 			$play->save();
 		} else {
-			ob_end_clean();
+			$stdout = ob_get_clean();
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Table or player hand is invalid' ] );
+			echo json_encode( [ 'message' => 'Table or player hand is invalid', 'dbg' => $stdout ] );
 		}
 		break;
 }
