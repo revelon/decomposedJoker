@@ -1,9 +1,8 @@
 <?php
 
 require('./sys.php');
-ob_start();
-
 header('Content-Type: application/json');
+ob_start();
 
 // Get the JSON contents
 $json = file_get_contents('php://input');
@@ -13,11 +12,11 @@ $data = json_decode($json);
 
 switch ($data->action) {
 	case "initGame":
+		unlink(Game::FILENAME); // should not be necessary
 		$play = new Game();
 		$play->startNewGame();
 		$play->save();
-		ob_end_clean();
-		echo json_encode( [ 'data' => $play->getDeck()->getCards() ] );
+		echo json_encode( [ 'data' => $play->getDeck()->getCards(), 'dbg' => ob_get_clean() ] );
 		break;
 	case "registerPlayer":
 		$play = new Game();
@@ -25,28 +24,31 @@ switch ($data->action) {
 		$pid = $play->assignPlayer($data->name);
 		$play->setActivePlayer($pid);		// change later !!
 		$play->save();
-		ob_end_clean();
-		echo json_encode( [ 'data' => $pid ] );
+		echo json_encode( [ 'data' => $pid, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getHand":
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
-		//ob_end_clean();
-		echo json_encode( [ 'data' => $hand ] );
+		echo json_encode( [ 'data' => $hand, 'dbg' => ob_get_clean() ] );
+		break;
+	case "getTable":
+		$play = new Game();
+		$play = Game::load(Game::FILENAME);
+		$table = $play->getTable()->getGroupsAsArray();
+		echo json_encode( [ 'data' => $table, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getCard":
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		if ($play->doTurnAsGetCard($data->playerId)) {
 			$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
-			ob_end_clean();
-			echo json_encode( [ 'data' => $hand ] );
 			$play->save();
+			echo json_encode( [ 'data' => $hand, 'dbg' => ob_get_clean() ] );
 		} else {
-			ob_end_clean();
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Player is not allowed to get card.' ] ); // different errors should happen
+			// many different errors should happen !!
+			echo json_encode( [ 'message' => 'Player is not allowed to get card.', 'dbg' => ob_get_clean() ] ); 
 		}
 		break;
 	case "validateGroup":
@@ -55,12 +57,10 @@ switch ($data->action) {
 			$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 		}
 		if (Group::validate($newSet)) {
-			$stdout = ob_get_clean();
-			echo json_encode( [ 'data' => true, 'dbg' => $stdout ] );
+			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
 		} else {
-			$stdout = ob_get_clean();
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Card set is invalid', 'dbg' => $stdout ] );
+			echo json_encode( [ 'message' => 'Card set is invalid', 'dbg' => ob_get_clean() ] );
 		}
 		break;
 	case "doTableChange":
@@ -79,13 +79,11 @@ switch ($data->action) {
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		if ($play->doTurnAsTableChange($data->playerId, $table, $hand)) {
-			$stdout = ob_get_clean();
-			echo json_encode( [ 'data' => true, 'dbg' => $stdout ] );
-			$play->save();
+			$play->save();			
+			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
 		} else {
-			$stdout = ob_get_clean();
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Table or player hand is invalid', 'dbg' => $stdout ] );
+			echo json_encode( [ 'message' => 'Table or player hand is invalid', 'dbg' => ob_get_clean() ] );
 		}
 		break;
 }

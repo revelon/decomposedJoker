@@ -5,11 +5,18 @@ class Table implements \ArrayAccess, \Iterator, \Countable
     private $rows = [];
     private $idx = 0;
 
-    public function __construct()
-    {
+    public function __construct() {
     }
 
-    public function getCardIds() {
+    public function getGroupsAsArray() : array {
+        $ret = [];
+        foreach ($this->rows as $set) {
+             $ret[] = $set->getCardIds();
+         }
+         return $ret;
+    }
+
+    public function getCardIds() : array {
         $ids = [];
         foreach ($this->rows as $set) {
             $ids = array_merge($ids, $set->getCardIds());
@@ -17,10 +24,10 @@ class Table implements \ArrayAccess, \Iterator, \Countable
         return $ids;
     }
 
-    public function areAllSetsValid() {
+    public function areAllSetsValid() : bool {
         //var_dump('xxxxxx', $this);
         foreach ($this->rows as $set) {
-            //var_dump($set, Group::validate($set));
+            var_dump('areAllSetsValid', $set, Group::validate($set));
             if (!Group::validate($set)) {
                 return false;
             }

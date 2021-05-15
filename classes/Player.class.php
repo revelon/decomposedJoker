@@ -31,6 +31,7 @@ class Player {
 
 	function addCardToHand(Card $card) {
 		$this->hand->pushCard($card);
+		$this->hand->sortCards();
 	}
 
 	public function getCardByType(string $type, int $value) {
