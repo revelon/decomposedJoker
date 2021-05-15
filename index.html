@@ -5,9 +5,14 @@
 	<title>Decomposed Joker GUI</title>
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div { width: 100px; display: inline-block; background-color: beige; }
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div { width: 36px; display: inline-block; cursor: pointer;}
 		div {border: 2px dotted blue; margin: 4px; padding: 4px; }
-		div.active {border: 2px dotted red;}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(4px 4px 5px DarkGreen); }
+		div.spades {background-color: LightSteelBlue;}
+		div.clubs {background-color: LightGray;}
+		div.hearts {background-color: LightSalmon;}
+		div.diamonds {background-color: LightCoral;}
+		div.wildcard {background-color: Tan;}
 	</style>
 	<script>
 		"use strict";
@@ -107,6 +112,7 @@
 			if (render) {
 				renderCardGroups(window.hand, guiHand);
 			}
+			showTurnEnd();
 		}
 
 		async function getTable(render = false) {
@@ -142,6 +148,7 @@
 		async function validateAndDoTurn() {
 			console.log('method: validateAndDoTurn');
 			// iterate through all new groups
+			/*
 			window.sets.forEach( async (grp, idx) => {
 				console.log('validating group_id...', idx, grp.id);
 				let cards = [];
@@ -169,7 +176,7 @@
 					console.log('bad luck, invalid set id:', s);
 					return false;
 				}
-			}
+			}*/
 
 			try {
 				let newTbl = [];
@@ -218,6 +225,7 @@
 				console.dir('doTableChange', turn);
 				// do all loading and rendering, table etc.... !!!!
 				await getServerState();
+				showTurnEnd();
 			} catch (err) {
 				console.dir('err', err);
 			}
@@ -240,26 +248,37 @@
 			console.log('method: renderCardGroups', groups);
 			gui.innerHTML = '';
 			for(const s in groups) {
-				console.log('group_id', groups[s].id);
+				console.log('rendering group_id', groups[s].id);
 				const nl = el('div', groups[s].id, `id: ${groups[s].id}`);
+
+				if (groups[s].id != 0) { // not for hand
+					const butt0 = el('button', "act0-" + groups[s].id, '++X');
+					butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
+					nl.appendChild(butt0);
+				}
+
 				groups[s].cards.forEach( c => {
 					const card = renderCard(c);
 					card.addEventListener('click', (e) => activateCard(c), true);
 					nl.appendChild(card);
 				});
-				const butt = el('button', "act-" + groups[s].id, '+');
-				butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
-				nl.appendChild(butt);
+
+				if (groups[s].id !== 0) { // not for hand
+					const butt = el('button', "act-" + groups[s].id, 'X++');
+					butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
+					nl.appendChild(butt);
+				}
 				gui.appendChild(nl);
 			}
 		}
 
-		function addActiveCardsToSet(setId) {
-			console.log('method: addActiveCardsToSet', setId, window.actives, window.sets);
-			/* // merge all actives with new set
-			if (window.sets[setId]) {
-				window.sets[setId].cards = window.sets[setId].cards.concat(window.actives);
-			}*/
+		function addActiveCardsToSet(setId, toTheStart = false) {
+			console.log('method: addActiveCardsToSet', setId, toTheStart, window.actives, window.sets);
+
+			if (toTheStart) {
+				window.actives.reverse();
+			}
+
 			window.actives.forEach( a => {
 				console.dir('iterating window.actives', a);
 				// do hand adds and removes
@@ -267,7 +286,7 @@
 				if (y > -1) {
 					window.hand[0].cards.splice(y, 1);
 				} else if (setId === 0) {
-					window.hand[0].cards.push(a);
+					toTheStart ? window.hand[0].cards.unshift(a) : window.hand[0].cards.push(a);
 					// add sort!!
 				}
 
@@ -277,7 +296,7 @@
 					if (x > -1) {
 						window.table[idx].cards.splice(x, 1);
 					} else if (setId === window.table[idx].id) {
-						window.table[idx].cards.push(a);
+						toTheStart ? window.table[idx].cards.unshift(a) : window.table[idx].cards.push(a);
 						// add sort!!
 					}
 				});
@@ -289,7 +308,7 @@
 					if (z > -1) {
 						window.sets[idx].cards.splice(z, 1);
 					} else if (setId === window.sets[idx].id) {
-						window.sets[idx].cards.push(a);
+						toTheStart ? window.sets[idx].cards.unshift(a) : window.sets[idx].cards.push(a);
 						// add sort!!
 					}
 				});
@@ -302,7 +321,12 @@
 		}
 
 		function renderCard(id) {
-			return el('div', id, `${window.allCards[id].value}<br>${window.allCards[id].type}`);
+			const types = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&#10029;'};
+			let card = el('div', id, `${window.allCards[id].value} ${types[window.allCards[id].type]}`);
+			let attr = document.createAttribute("class");
+			attr.value = window.allCards[id].type + " " + window.allCards[id].value;
+			card.setAttributeNode(attr);
+			return card;
 		}
 
 		function activateCard(id) {
@@ -322,30 +346,36 @@
 			el.id = id;
 			return el;
 		}
+
+		function showTurnEnd() {
+			document.getElementById("indicator").animate(
+				[
+					{ letterSpacing: '1px', color: '#000' },
+					{ letterSpacing: '10px', color: '#0a0' },
+					{ letterSpacing: '1px', color: '#000' }
+				], 500);
+		}
 	</script>
 </head>
 <body>
 
-<h3>Decomposed Joker GUI</h3>
+<h3 id="indicator">Decomposed Joker GUI</h3>
 
 <button onclick='initGame()'>Init Game</button>
 <button onclick='registerPlayer("marek")'>registerPlayer</button>
-<button onclick='getServerState()'>reset / fresh</button>
-<button onclick='getHand(true)'>getHand and renderHand</button>
-<button onclick='getTable(true)'>getTable and renderTable</button>
-<button onclick='createEmptySet()'>create Empty Set</button> |
+<button onclick='getServerState()'>refresh / reset</button> 
+<!--button onclick='getHand(true)'>getHand and renderHand</button>
+<button onclick='getTable(true)'>getTable and renderTable</button--> ||  ||  || 
 <button onclick='getCard(true)'>getCard and end turn</button>
 <button onclick='validateAndDoTurn()'>validate all groups and end turn</button>
 <hr>
 Hand:
 <div id='guiHand'></div>
-NewSets:
+NewSets: <button onclick='createEmptySet()'>create Empty Set</button>
 <div id='guiNewSets'></div>
 Table
 <div id='guiTable'></div>
 <hr>
-
-divna chyba: no cards from hand were moved...
 
 
 </body>
