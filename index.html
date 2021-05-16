@@ -5,14 +5,17 @@
 	<title>Decomposed Joker GUI</title>
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div { width: 36px; display: inline-block; cursor: pointer;}
-		div {border: 2px dotted blue; margin: 4px; padding: 4px; }
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(4px 4px 5px DarkGreen); }
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; display: inline-block; cursor: pointer;}
+		div#guiPlayers div {width: 180px; display: inline-block;}
+		div {border: 2px dotted gray; margin: 2px; padding: 3px;}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(2px 2px 6px DarkGreen);}
 		div.spades {background-color: LightSteelBlue;}
 		div.clubs {background-color: LightGray;}
 		div.hearts {background-color: LightSalmon;}
 		div.diamonds {background-color: LightCoral;}
 		div.wildcard {background-color: Tan;}
+		div#guiTable {column-count: 2; background-color: Ivory;}
+		button {background-color: PaleGreen;}
 	</style>
 	<script>
 		"use strict";
@@ -45,6 +48,7 @@
 
 		var allCards = {};
 		var playerId = '';
+		var players = {};
 		var hand = [];
 		var sets = [];
 		var table = [];
@@ -52,6 +56,7 @@
 		var guiHand;
 		var guiNewSets;
 		var guiTable;
+		var guiPlayers;
 
 		async function initGame() {
 			console.log('method: initGame');
@@ -63,17 +68,38 @@
 				console.dir('err', err);
 			}
 
+			initHelper();
+		}
+
+		async function joinGame() {
+			console.log('method: joinGame');  // add ID later !!!
+			try {
+				const deck = await postData({ action: 'getGameCards' });
+				deck.forEach(c => window.allCards[c.id] = c);
+				//console.dir('initGame', window.allCards);
+			} catch (err) {
+				console.dir('err', err);
+			}
+
+			initHelper();
+		}
+
+		function initHelper() {
+			console.log('method: initHeper');
+
 			let hand = {};
 			hand.id = 0; // 0 special setId and is always player's hand
 			hand.cards = [];
 			window.hand.push(hand);
 
-			guiHand = document.getElementById('guiHand');
-			guiHand.innerHTML = '';
-			guiNewSets = document.getElementById('guiNewSets');
-			guiNewSets.innerHTML = '';			
-			guiTable = document.getElementById('guiTable');
-			guiTable.innerHTML = '';
+			window.guiHand = document.getElementById('guiHand');
+			window.guiHand.innerHTML = '';
+			window.guiNewSets = document.getElementById('guiNewSets');
+			window.guiNewSets.innerHTML = '';			
+			window.guiTable = document.getElementById('guiTable');
+			window.guiTable.innerHTML = '';
+			window.guiPlayers = document.getElementById('guiPlayers');
+			window.guiPlayers.innerHTML = '';
 
 			createEmptySet();
 		}
@@ -85,6 +111,37 @@
 				console.dir('registerPlayer', window.playerId);
 			} catch (err) {
 				console.dir('err', err);
+			}
+			let nm = el('span', null, ': ' + name);
+			document.getElementById('indicator').appendChild(nm);
+		}
+
+		async function startGame() {
+			console.log('method: startGame', window.playerId);
+			try {
+				if (await postData({ action: 'setActivePlayer', 'playerId': window.playerId })) {
+					console.dir('startGame', true);
+					await getPlayers(true);
+				} else {
+					throw 'Setting player as active failed';
+				}
+			} catch (err) {
+				console.dir('err', err);
+			}
+			//getPlayers(); // should not be necessary later
+		}
+
+		async function getPlayers(render = false) {
+			console.log('method: getPlayers');
+			try {
+				const plrs = await postData({ action: 'getPlayers' });
+				window.players = plrs.players;
+				console.dir('getPlayers', window.players);
+			} catch (err) {
+				console.dir('err', err);
+			}
+			if (render) {
+				renderPlayers(true);
 			}
 		}
 
@@ -112,6 +169,7 @@
 			if (render) {
 				renderCardGroups(window.hand, guiHand);
 			}
+			await getPlayers(true);
 			showTurnEnd();
 		}
 
@@ -139,6 +197,7 @@
 			console.log('method: getServerState');
 			await getHand(true);
 			await getTable(true);
+			await getPlayers(true);
 			window.actives = [];
 			window.sets = [];
 			createEmptySet();
@@ -147,37 +206,6 @@
 
 		async function validateAndDoTurn() {
 			console.log('method: validateAndDoTurn');
-			// iterate through all new groups
-			/*
-			window.sets.forEach( async (grp, idx) => {
-				console.log('validating group_id...', idx, grp.id);
-				let cards = [];
-				window.sets[idx].cards.forEach( c => {
-					cards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) 
-				} );
-				const valid = await validateGroup(cards);
-				if (valid) {
-					console.log('great, valid set id:', grp.id);
-					getServerState();
-				} else {
-					console.log('bad luck, invalid set id:', grp.id);
-					return false;
-				}
-			} );
-
-			// iterate through modified table  !!!! predelat na bezne pole (asi) !!
-			for(const s in window.table) {
-				console.log('iterating through table, group_id...', s, window.table[s].id);
-				let cards = [];
-				window.table[s].cards.forEach( c => cards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
-				if (await validateGroup(cards)) {
-					console.log('great, valid set id:', s);
-				} else {
-					console.log('bad luck, invalid set id:', s);
-					return false;
-				}
-			}*/
-
 			try {
 				let newTbl = [];
 				for(const s in window.table) {
@@ -225,6 +253,7 @@
 				console.dir('doTableChange', turn);
 				// do all loading and rendering, table etc.... !!!!
 				await getServerState();
+				await getPlayers(true);
 				showTurnEnd();
 			} catch (err) {
 				console.dir('err', err);
@@ -321,12 +350,19 @@
 		}
 
 		function renderCard(id) {
-			const types = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&#10029;'};
-			let card = el('div', id, `${window.allCards[id].value} ${types[window.allCards[id].type]}`);
-			let attr = document.createAttribute("class");
-			attr.value = window.allCards[id].type + " " + window.allCards[id].value;
-			card.setAttributeNode(attr);
+			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&#10029;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;'};
+			let card = el('div', id, `${m[window.allCards[id].value]} ${m[window.allCards[id].type]}`);
+			card.classList.add(window.allCards[id].type, window.allCards[id].value);
 			return card;
+		}
+
+		function renderPlayers() {
+			window.guiPlayers.innerHTML = '';
+			for(const p in window.players) {
+				let plr = el('div', null, `${window.players[p].name} (${window.players[p].cards} cards)`);
+				plr.classList.add(window.players[p].active);
+				guiPlayers.appendChild(plr);
+			}
 		}
 
 		function activateCard(id) {
@@ -340,10 +376,12 @@
 			event.stopPropagation();
 		}
 
-		function el(element, id, htmlBody) {
+		function el(element, id = null, htmlBody = '') {
 			let el = document.createElement(element);
 			el.innerHTML = htmlBody;
-			el.id = id;
+			if (id) {
+				el.id = id;
+			}
 			return el;
 		}
 
@@ -362,13 +400,17 @@
 <h3 id="indicator">Decomposed Joker GUI</h3>
 
 <button onclick='initGame()'>Init Game</button>
-<button onclick='registerPlayer("marek")'>registerPlayer</button>
+<button onclick='joinGame()'>Join Game</button>
+<button onclick='registerPlayer(prompt("Please enter your name", "Marek"))'>registerPlayer</button>
+<button onclick='startGame()'>start game / set me as active player</button> 
 <button onclick='getServerState()'>refresh / reset</button> 
 <!--button onclick='getHand(true)'>getHand and renderHand</button>
 <button onclick='getTable(true)'>getTable and renderTable</button--> ||  ||  || 
 <button onclick='getCard(true)'>getCard and end turn</button>
 <button onclick='validateAndDoTurn()'>validate all groups and end turn</button>
 <hr>
+Players:
+<div id='guiPlayers'></div>
 Hand:
 <div id='guiHand'></div>
 NewSets: <button onclick='createEmptySet()'>create Empty Set</button>
@@ -376,6 +418,9 @@ NewSets: <button onclick='createEmptySet()'>create Empty Set</button>
 Table
 <div id='guiTable'></div>
 <hr>
+
+vyresit kam se ztraceji karty/proc nejsou v allCards ???
+
 
 
 </body>

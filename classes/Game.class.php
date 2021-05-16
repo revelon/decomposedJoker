@@ -14,8 +14,6 @@ class Game {
 	public function startNewGame() {
 		$this->deck = $this->createDeck();
 		$this->table = new Table();
-		// store all card unique ids to game itself for necessary later validations
-		$this->allCardIds = $this->deck->getCardIds();
 	}
 
 	public function assignPlayer(string $name) : string {
@@ -34,8 +32,21 @@ class Game {
 		return clone $this->table;
 	}
 
+	public function getPlayersInfo() : array {
+		$ret = [];
+		foreach ($this->players as $p) {
+			$ret[] = ['name' => $p->getName(), 'cards' => sizeOf($p->getHand()->getCards()), 
+				'active' => ($p->getId() === $this->activePlayer) ? 'active' : 'inactive'];
+		}
+		return $ret;
+	}
+
 	public function setActivePlayer(string $id) : void {
 		$this->activePlayer = $id;
+	}
+
+	public function getActivePlayerId() : string {
+		return $this->activePlayer;
 	}
 
 	public function getPlayerCopy(string $id) : Player {
@@ -110,15 +121,22 @@ class Game {
 
 	// todo: probably needs some refactoring
 	private function nextPlayerTurn() : string {
-		foreach ($this->players as $id => $player) {
-			if ($id === $this->activePlayer) {
-				$next = next($this->players);
-				if ($next) {
-					$this->activePlayer = $next->getId();
-					return $this->activePlayer;
-				} else {
-					reset($this->players);
-					$this->activePlayer = current($this->players)->getId();
+		$next = null;
+		$found = false;
+		foreach ($this->players as $player) {
+			if ($this->activePlayer === $player->getId()) {
+				$found = true;
+				continue;
+			} else if ($found && $this->activePlayer !== $player->getId()) {
+				$next = $player->getId();
+				$this->activePlayer = $next;
+				return $next;
+			}
+		}
+		if ($found && !$next) {
+			foreach ($this->players as $player) {
+				if ($this->activePlayer !== $player->getId()) {
+					$this->activePlayer = $player->getId();
 					return $this->activePlayer;
 				}
 			}
@@ -267,6 +285,8 @@ class Game {
 			new Card(12,Card::DIAMONDS),
 			new Card(13,Card::DIAMONDS)
 		);
+		// store all card unique ids to game itself for necessary later validations, before shuffle
+		$this->allCardIds = $deck->getCardIds();
 		$deck->shuffle();
 		return $deck;
 	}

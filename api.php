@@ -18,30 +18,44 @@ switch ($data->action) {
 		$play->save();
 		echo json_encode( [ 'data' => $play->getDeck()->getCards(), 'dbg' => ob_get_clean() ] );
 		break;
+	case "getGameCards":
+		$play = Game::load(Game::FILENAME);
+		echo json_encode( [ 'data' => $play->getDeck()->getCards(), 'dbg' => ob_get_clean() ] );
+		break;
 	case "registerPlayer":
-		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		$pid = $play->assignPlayer($data->name);
-		$play->setActivePlayer($pid);		// change later !!
 		$play->save();
 		echo json_encode( [ 'data' => $pid, 'dbg' => ob_get_clean() ] );
 		break;
+	case "setActivePlayer": // and start game
+		$play = Game::load(Game::FILENAME);
+		if ($play->getActivePlayerId() === '') {
+			$play->setActivePlayer($data->playerId);
+			$play->save();
+			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
+		} else {
+			http_response_code(403);
+			echo json_encode( [ 'message' => 'Active player was already set.', 'dbg' => ob_get_clean() ] ); 		
+		}
+		break;
+	case "getPlayers":
+		$play = Game::load(Game::FILENAME);
+		echo json_encode( [ 'data' => ['players' => $play->getPlayersInfo()], 'dbg' => ob_get_clean() ] );
+		break;
 	case "getHand":
-		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 		echo json_encode( [ 'data' => $hand, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getTable":
-		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		$table = $play->getTable()->getGroupsAsArray();
 		echo json_encode( [ 'data' => $table, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getCard":
-		$play = new Game();
 		$play = Game::load(Game::FILENAME);
-		if ($play->doTurnAsGetCard($data->playerId)) {
+		if ($play->getActivePlayerId() === $data->playerId && $play->doTurnAsGetCard($data->playerId)) {
 			$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 			$play->save();
 			echo json_encode( [ 'data' => $hand, 'dbg' => ob_get_clean() ] );
