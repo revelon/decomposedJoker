@@ -6,6 +6,7 @@ class Game {
 	private $deck = null;
 	private $table = null;
 	private $activePlayer = '';
+	public $finished = false;
 	const FILENAME = 'store/aaaaaa.data';
 
 	function __construct() {
@@ -17,15 +18,21 @@ class Game {
 	}
 
 	public function assignPlayer(string $name) : string {
-		$n = new Player($name);
-		$n->addCardToHand($this->deck->popCard());
-		$n->addCardToHand($this->deck->popCard());
-		$n->addCardToHand($this->deck->popCard());
-		$n->addCardToHand($this->deck->popCard());
-		$n->addCardToHand($this->deck->popCard());
-		$this->players[$n->getId()] = $n;
-		dbg("player", $n);
-		return $n->getId();
+		$p = new Player($name);
+		$this->players[$p->getId()] = $p;
+		dbg("player set", $p);
+		return $p->getId();
+	}
+
+	public function givePlayersFirstHands() : void {
+		foreach ($this->players as $p) {
+			$p->addCardToHand($this->deck->popCard());
+			$p->addCardToHand($this->deck->popCard());
+			$p->addCardToHand($this->deck->popCard());
+			$p->addCardToHand($this->deck->popCard());
+			$p->addCardToHand($this->deck->popCard());
+		}
+		dbg("players have their cards", $this->players);
 	}
 
 	public function getCurrentTableCopy() : Table {
@@ -35,8 +42,7 @@ class Game {
 	public function getPlayersInfo() : array {
 		$ret = [];
 		foreach ($this->players as $p) {
-			$ret[] = ['name' => $p->getName(), 'cards' => sizeOf($p->getHand()->getCards()), 
-				'active' => ($p->getId() === $this->activePlayer) ? 'active' : 'inactive'];
+			$ret[] = $p->getPlayerInfo($this->activePlayer);
 		}
 		return $ret;
 	}
@@ -86,6 +92,13 @@ class Game {
 		$newTableIds = $newTable->getCardIds();
 		$handDiff = array_diff($currentHandIds, $newHandIds);
 		$tableDiff = array_diff($newTableIds, $currentTableIds);
+		$otherPlayersHands = [];
+		foreach ($this->players as $p) {
+			if ($p->getId() === $this->activePlayer) {
+				continue;
+			}
+			$otherPlayersHands = array_merge($otherPlayersHands, $p->getHand()->getCardIds());
+		}
 
 		dbg('sizes of currentHandIds newHandIds currentTableIds newTableIds handDiff tableDiff:', 
 			sizeOf($currentHandIds), sizeOf($newHandIds), sizeOf($currentTableIds), 
@@ -97,7 +110,7 @@ class Game {
 			return false;
 		}
 		// there are still all cards in the game, none is missing or extra and they are the same ones
-		if (sizeOf(array_diff(array_merge($newHandIds, $newTableIds), $this->allCardIds))) {
+		if (sizeOf(array_diff(array_merge($newHandIds, $newTableIds, $otherPlayersHands), $this->allCardIds))) {
 			echo "set of new and old cards are different\n";
 			return false;
 		}
@@ -107,12 +120,14 @@ class Game {
 			return false;
 		}
 
+		$this->table = $newTable;
+		$this->players[$this->activePlayer]->setNewHand($newHand);
+		$this->players[$this->activePlayer]->canAddCards = true; // allow player to add cards, after finishing his first set
+
 		// end of the game or next players turn
-		if (sizeOf($newHand) === 0) {
+		if (sizeOf($newHand) === 0 || $newHand->areOnlyJokersPresent()) {
 			$this->gameOver($id);
 		} else {
-			$this->table = $newTable;
-			$this->players[$this->activePlayer]->setNewHand($newHand);
 			$this->nextPlayerTurn();
 		}
 		echo "finishing valid turn\n";
@@ -144,7 +159,9 @@ class Game {
 	}
 
 	public function gameOver(string $id) : void {
-		echo "Player " . $this->players[$id]->getName() . " wins!!";
+		$this->finished = true;
+		$this->players[$this->activePlayer]->winner = true;
+		echo "Player " . $this->players[$id]->getName() . " wins!!!!";
 	}
 
 	public function save() : bool {
@@ -186,7 +203,7 @@ class Game {
 			new Card(11,Card::SPADES),
 			new Card(12,Card::SPADES),
 			new Card(13,Card::SPADES),
-
+/*
 			new Card(1,	Card::HEARTS),
 			new Card(2,	Card::HEARTS),
 			new Card(3,	Card::HEARTS),
@@ -270,7 +287,7 @@ class Game {
 			new Card(11,Card::CLUBS),
 			new Card(12,Card::CLUBS),
 			new Card(13,Card::CLUBS),
-
+*/
 			new Card(1,	Card::DIAMONDS),
 			new Card(2,	Card::DIAMONDS),
 			new Card(3,	Card::DIAMONDS),

@@ -7,15 +7,16 @@
 	<style>
 		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; display: inline-block; cursor: pointer;}
 		div#guiPlayers div {width: 180px; display: inline-block;}
+		div#guiPlayers div.winner {color: gold; font-size: 2em;}
 		div {border: 2px dotted gray; margin: 2px; padding: 3px;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(2px 2px 6px DarkGreen);}
+		.active {border: 2px solid DarkGreen; filter: drop-shadow(2px 2px 6px DarkGreen);}
 		div.spades {background-color: LightSteelBlue;}
 		div.clubs {background-color: LightGray;}
 		div.hearts {background-color: LightSalmon;}
 		div.diamonds {background-color: LightCoral;}
 		div.wildcard {background-color: Tan;}
 		div#guiTable {column-count: 2; background-color: Ivory;}
-		button {background-color: PaleGreen;}
+		button {background-color: PaleGreen; font-size: 1em;}
 	</style>
 	<script>
 		"use strict";
@@ -48,6 +49,7 @@
 
 		var allCards = {};
 		var playerId = '';
+		var canModifyTable = false;
 		var players = {};
 		var hand = [];
 		var sets = [];
@@ -57,6 +59,7 @@
 		var guiNewSets;
 		var guiTable;
 		var guiPlayers;
+		var autoRefresh;
 
 		async function initGame() {
 			console.log('method: initGame');
@@ -76,7 +79,8 @@
 			try {
 				const deck = await postData({ action: 'getGameCards' });
 				deck.forEach(c => window.allCards[c.id] = c);
-				//console.dir('initGame', window.allCards);
+				//console.dir('joinGame', window.allCards);
+				await getPlayers(true);
 			} catch (err) {
 				console.dir('err', err);
 			}
@@ -104,16 +108,21 @@
 			createEmptySet();
 		}
 
-		async function registerPlayer(name) {
-			console.log('method: registerPlayer', name);
+		async function registerPlayer() {
+			console.log('method: registerPlayer', window.localStorage.getItem('playerName'));
+			const name = prompt("Please enter your name", window.localStorage.getItem('playerName'));
+			if (name != window.localStorage.getItem('playerName')) {
+				window.localStorage.setItem('playerName', name);
+			}
 			try {
 				window.playerId = await postData({ action: 'registerPlayer', 'name': name });
 				console.dir('registerPlayer', window.playerId);
+				await getPlayers(true);
 			} catch (err) {
 				console.dir('err', err);
 			}
 			let nm = el('span', null, ': ' + name);
-			document.getElementById('indicator').appendChild(nm);
+			document.getElementById('indicator').append(nm);
 		}
 
 		async function startGame() {
@@ -122,6 +131,7 @@
 				if (await postData({ action: 'setActivePlayer', 'playerId': window.playerId })) {
 					console.dir('startGame', true);
 					await getPlayers(true);
+					await getHand(true);
 				} else {
 					throw 'Setting player as active failed';
 				}
@@ -145,6 +155,20 @@
 			}
 		}
 
+		function autoRefreshPlayers() {
+			console.log('method: autoRefreshPlayers');
+			try {
+				if (!window.autoRefresh) {
+					window.autoRefresh = window.setInterval( async () => { await getPlayers(true); }, 2000);
+				} else {
+					window.clearInterval(window.autoRefresh);
+				}
+				document.getElementById('autoRefresh').classList.toggle("active");
+			} catch (err) {
+				console.dir('err', err);
+			}
+		}
+
 		async function getHand(render = false) {
 			console.log('method: getHand');
 			try {
@@ -154,7 +178,7 @@
 				console.dir('err', err);
 			}
 			if (render) {
-				renderCardGroups(window.hand, guiHand);
+				renderCardGroups(window.hand, window.guiHand);
 			}
 		}
 
@@ -167,7 +191,7 @@
 				console.dir('err', err);
 			}
 			if (render) {
-				renderCardGroups(window.hand, guiHand);
+				renderCardGroups(window.hand, window.guiHand);
 			}
 			await getPlayers(true);
 			showTurnEnd();
@@ -189,7 +213,7 @@
 				console.dir('err', err);
 			}
 			if (render) {
-				renderCardGroups(window.table, guiTable);
+				renderCardGroups(window.table, window.guiTable, window.canModifyTable);
 			}
 		}
 
@@ -201,25 +225,7 @@
 			window.actives = [];
 			window.sets = [];
 			createEmptySet();
-			renderCardGroups(window.sets, guiNewSets);
-		}
-
-		async function validateAndDoTurn() {
-			console.log('method: validateAndDoTurn');
-			try {
-				let newTbl = [];
-				for(const s in window.table) {
-					newTbl.push(window.table[s]);
-				}
-				for(const s in window.sets) {
-					newTbl.push(window.sets[s]);
-				}
-				console.dir('trying to do tableChange...', newTbl);
-				window.table = newTbl;
-				await doTableChange();
-			} catch (err) {
-				console.dir('err', err);
-			}
+			renderCardGroups(window.sets, window.guiNewSets);
 		}
 
 		async function validateGroup(group) {
@@ -240,9 +246,21 @@
 				let handCards = [];
 				window.hand[0].cards.forEach( c => handCards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
 
+				// merge prepared sets and xisting table to new table
+				let newTbl = [];
+				for(const s in window.table) {
+					newTbl.push(window.table[s]);
+				}
+				for(const s in window.sets) {
+					newTbl.push(window.sets[s]);
+				}
+				console.dir('trying to do tableChange as new table...', newTbl);
+				window.table = newTbl;
+
+				// and now try to do server side validation
 				let fullTable = [];
 				for(const s in window.table) {
-					console.log('group_id...', s);
+					console.log('group_id on existing table...', s);
 					let cardSet = [];
 					window.table[s].cards.forEach( c => cardSet.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
 					if(cardSet.length) { // do not send empty sets by accident
@@ -250,11 +268,15 @@
 					}
 				}
 				const turn = await postData({ action: 'doTableChange', 'playerId': window.playerId, 'table': fullTable, 'hand': handCards });
-				console.dir('doTableChange', turn);
+				console.dir('doTableChange ended as', turn);
 				// do all loading and rendering, table etc.... !!!!
 				await getServerState();
 				await getPlayers(true);
 				showTurnEnd();
+				window.canModifyTable = true;
+				if (turn == "won") {
+					alert('Victory!!')
+				}
 			} catch (err) {
 				console.dir('err', err);
 			}
@@ -270,34 +292,38 @@
 			set.cards = [];
 			console.dir(set);
 			window.sets.push(set);
-			renderCardGroups(window.sets, guiNewSets);
+			renderCardGroups(window.sets, window.guiNewSets);
 		}
 
-		function renderCardGroups(groups, gui) {
+		function renderCardGroups(groups, gui, enableEvents = true) {
 			console.log('method: renderCardGroups', groups);
 			gui.innerHTML = '';
 			for(const s in groups) {
 				console.log('rendering group_id', groups[s].id);
 				const nl = el('div', groups[s].id, `id: ${groups[s].id}`);
 
-				if (groups[s].id != 0) { // not for hand
-					const butt0 = el('button', "act0-" + groups[s].id, '++X');
-					butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
-					nl.appendChild(butt0);
-				}
-
-				groups[s].cards.forEach( c => {
+				groups[s].cards.forEach( c => { // add cards
 					const card = renderCard(c);
-					card.addEventListener('click', (e) => activateCard(c), true);
-					nl.appendChild(card);
+					if (enableEvents) {
+						card.addEventListener('click', (e) => activateCard(c), true);
+					}
+					nl.append(card);
 				});
 
-				if (groups[s].id !== 0) { // not for hand
-					const butt = el('button', "act-" + groups[s].id, 'X++');
-					butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
-					nl.appendChild(butt);
+				if (enableEvents) {
+					if (groups[s].id != 0) { // not for hand
+						const butt0 = el('button', "act0-" + groups[s].id, ' + ');
+						butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
+						nl.prepend(butt0);
+					}
+
+					if (groups[s].id !== 0) { // not for hand
+						const butt = el('button', "act-" + groups[s].id, ' + ');
+						butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
+						nl.append(butt);
+					}
 				}
-				gui.appendChild(nl);
+				gui.append(nl);
 			}
 		}
 
@@ -344,9 +370,9 @@
 			});
 
 			window.actives = [];
-			renderCardGroups(window.sets, guiNewSets);
-			renderCardGroups(window.hand, guiHand);
-			renderCardGroups(window.table, guiTable);
+			renderCardGroups(window.sets, window.guiNewSets);
+			renderCardGroups(window.hand, window.guiHand);
+			renderCardGroups(window.table, window.guiTable, window.canModifyTable);
 		}
 
 		function renderCard(id) {
@@ -360,8 +386,8 @@
 			window.guiPlayers.innerHTML = '';
 			for(const p in window.players) {
 				let plr = el('div', null, `${window.players[p].name} (${window.players[p].cards} cards)`);
-				plr.classList.add(window.players[p].active);
-				guiPlayers.appendChild(plr);
+				plr.classList.add(window.players[p].active, window.players[p].winner);
+				guiPlayers.append(plr);
 			}
 		}
 
@@ -401,13 +427,14 @@
 
 <button onclick='initGame()'>Init Game</button>
 <button onclick='joinGame()'>Join Game</button>
-<button onclick='registerPlayer(prompt("Please enter your name", "Marek"))'>registerPlayer</button>
+<button onclick='registerPlayer()'>registerPlayer</button>
 <button onclick='startGame()'>start game / set me as active player</button> 
+<button onclick='autoRefreshPlayers()' id='autoRefresh'>auto refresh players</button>
 <button onclick='getServerState()'>refresh / reset</button> 
 <!--button onclick='getHand(true)'>getHand and renderHand</button>
 <button onclick='getTable(true)'>getTable and renderTable</button--> ||  ||  || 
 <button onclick='getCard(true)'>getCard and end turn</button>
-<button onclick='validateAndDoTurn()'>validate all groups and end turn</button>
+<button onclick='doTableChange()'>validate all groups and end turn</button>
 <hr>
 Players:
 <div id='guiPlayers'></div>
@@ -419,9 +446,7 @@ Table
 <div id='guiTable'></div>
 <hr>
 
-vyresit kam se ztraceji karty/proc nejsou v allCards ???
-
-
 
 </body>
 </html>
+

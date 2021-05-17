@@ -18,6 +18,15 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
     	}
     }
 
+    public function areOnlyJokersPresent() : bool {
+        foreach($this->rows as $card) {
+            if ($card->type !== Card::WILD) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public function getCardIds() : array {
 		$ids = [];
 		foreach ($this->rows as $card) {

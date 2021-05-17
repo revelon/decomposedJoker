@@ -5,6 +5,8 @@ class Player {
 	private $id = null;
 	private $name = null;
 	private $hand = null;
+	public $canAddCards = false; // activated after first winished set
+	public $won = false;
 
 	function __construct(string $name) {
 		$this->name = $name;
@@ -12,8 +14,15 @@ class Player {
 		$this->id = bin2hex(random_bytes(8));
 	}
 
-	function getId() {
+	public function getId() : string {
 		return $this->id;
+	}
+
+	public function getPlayerInfo(string $activePlayer) : array {
+		return ['name' => $this->name, 'cards' => sizeOf($this->hand->getCards()), 
+			'active' => ($this->id === $activePlayer) ? 'active' : 'inactive',
+			'status' => ($this->won) ? 'winner' : 'playing',
+			'canAddCards' => $this->canAddCards ];
 	}
 
 	function getHand() {

@@ -31,6 +31,7 @@ switch ($data->action) {
 	case "setActivePlayer": // and start game
 		$play = Game::load(Game::FILENAME);
 		if ($play->getActivePlayerId() === '') {
+			$play->givePlayersFirstHands(); // give each some cards
 			$play->setActivePlayer($data->playerId);
 			$play->save();
 			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
@@ -93,8 +94,8 @@ switch ($data->action) {
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);
 		if ($play->doTurnAsTableChange($data->playerId, $table, $hand)) {
-			$play->save();			
-			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
+			$play->save(); // won = player won the game
+			echo json_encode( [ 'data' => $play->finished ? 'won' : 'done', 'dbg' => ob_get_clean() ] );
 		} else {
 			http_response_code(403);
 			echo json_encode( [ 'message' => 'Table or player hand is invalid', 'dbg' => ob_get_clean() ] );
