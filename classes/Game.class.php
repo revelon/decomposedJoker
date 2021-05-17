@@ -1,12 +1,12 @@
 <?php
 
 class Game {
-	private $players = null;
+	private $players = [];
 	private $allCardIds = [];	
 	private $deck = null;
 	private $table = null;
 	private $activePlayer = '';
-	public $finished = false;
+	public $status = 'inactive'; // inactive | playing | finished
 	const FILENAME = 'store/aaaaaa.data';
 
 	function __construct() {
@@ -156,10 +156,11 @@ class Game {
 				}
 			}
 		}
+		return $this->activePlayer; // solve one player game only case
 	}
 
 	public function gameOver(string $id) : void {
-		$this->finished = true;
+		$this->status = 'finished';
 		$this->players[$this->activePlayer]->winner = true;
 		echo "Player " . $this->players[$id]->getName() . " wins!!!!";
 	}

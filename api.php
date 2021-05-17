@@ -33,6 +33,7 @@ switch ($data->action) {
 		if ($play->getActivePlayerId() === '') {
 			$play->givePlayersFirstHands(); // give each some cards
 			$play->setActivePlayer($data->playerId);
+			$play->status = 'playing';
 			$play->save();
 			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
 		} else {
@@ -40,9 +41,11 @@ switch ($data->action) {
 			echo json_encode( [ 'message' => 'Active player was already set.', 'dbg' => ob_get_clean() ] ); 		
 		}
 		break;
-	case "getPlayers":
+	case "getGameInfo":
 		$play = Game::load(Game::FILENAME);
-		echo json_encode( [ 'data' => ['players' => $play->getPlayersInfo()], 'dbg' => ob_get_clean() ] );
+		echo json_encode( [ 'data' => [ 'players' => $play->getPlayersInfo(), 'gameStatus' => $play->status , 
+			'amIActivePlayer' => ($play->getActivePlayerId() && $play->getActivePlayerId() === $data->playerId) ], 
+			'dbg' => ob_get_clean() ] );
 		break;
 	case "getHand":
 		$play = Game::load(Game::FILENAME);
@@ -95,7 +98,7 @@ switch ($data->action) {
 		$play = Game::load(Game::FILENAME);
 		if ($play->doTurnAsTableChange($data->playerId, $table, $hand)) {
 			$play->save(); // won = player won the game
-			echo json_encode( [ 'data' => $play->finished ? 'won' : 'done', 'dbg' => ob_get_clean() ] );
+			echo json_encode( [ 'data' => ($play->status === 'finished') ? 'won' : 'done', 'dbg' => ob_get_clean() ] );
 		} else {
 			http_response_code(403);
 			echo json_encode( [ 'message' => 'Table or player hand is invalid', 'dbg' => ob_get_clean() ] );
