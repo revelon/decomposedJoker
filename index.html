@@ -6,11 +6,11 @@
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
 		html {background: radial-gradient(circle, rgba(166,221,129,1) 13%, rgba(37,152,53,1) 84%); height:100%; color: White; font-family: serif;}
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 55px; display: inline-block; cursor: pointer; border: 1px solid black; margin-left: -10px; border-radius: 4px; user-select: none;}
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 55px; display: inline-block; cursor: pointer; border: 1px solid Gray; margin-left: -10px; border-radius: 4px; user-select: none; break-inside: avoid;}
 		div#guiPlayers div {width: 180px; display: inline-block;}
 		div#guiPlayers div.winner {color: gold; font-size: 2em;}
 		div {margin: 2px; padding: 3px;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 2px DarkGreen);}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px DarkGreen); background-color: LightCyan !important;}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
@@ -19,9 +19,13 @@
 		div#guiTable {column-count: 2;}
 		button {background-color: Gold; font-size: 1em;}
 		input {background-color: Pink; font-size: 1em; cursor: crosshair;}
-		button#guiTurnGetCard, button#guiTurnChangeTable {font-size: 1.25em; background-color: Beige}
+		button#guiTurnGetCard, button#guiTurnChangeTable {
+			font-size: 1.6em; background-color: Beige; position: fixed; right: 30px; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px;}
+		button#guiTurnGetCard {bottom: 80px;}
+		button#guiTurnChangeTable {bottom: 30px;}
 		button {font-family: serif;}
 		div#guiHand button:first-of-type, div#guiNewSets button:first-of-type, div#guiTable button:first-of-type {margin-right: 11px;}
+		button.big {font-size: 2.5em;}
 	</style>
 	<script>
 		"use strict";
@@ -327,6 +331,7 @@
 				showTurnEnd();
 				window.canModifyTable = true;
 				if (turn == "won") {
+					await getGameInfo(true);
 					alert('Victory!!');
 					startAutoRefresh(true);
 				} else {
@@ -365,13 +370,21 @@
 					nl.append(card);
 				});
 
-				if (enableEvents && groups[s].cards.length && groups[s].id != 0) {
-					const butt0 = el('button', "act0-" + groups[s].id, ' + ');
-					butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
-					nl.prepend(butt0);
-					const butt = el('button', "act-" + groups[s].id, ' + ');
-					butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
-					nl.append(butt);
+				if (enableEvents) {
+					if (groups[s].id != 0 && groups[s].cards.length) { // not for hand
+						const butt0 = el('button', "act0-" + groups[s].id, ' + ');
+						butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
+						nl.prepend(butt0);
+					}
+
+					if (groups[s].id !== 0) { // not for hand
+						const butt = el('button', "act-" + groups[s].id, ' + ');
+						butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
+						if (!groups[s].cards.length) {
+							butt.classList.add('big');	
+						}						
+						nl.append(butt);
+					}
 				}
 
 				gui.append(nl);
@@ -455,7 +468,7 @@
 		}
 
 		function renderCard(id) {
-			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&#10029;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;'};
+			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&#10029;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '*'};
 			let card = el('div', id, `${m[window.allCards[id].value]}<br>&nbsp;&nbsp;${m[window.allCards[id].type]}<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m[window.allCards[id].value]}`);
 			card.classList.add(window.allCards[id].type, window.allCards[id].value);
 			return card;
@@ -524,7 +537,7 @@
 <button onclick='registerPlayer()' id='guiRegPlayer' disabled>Register Player</button>
 <button onclick='startGame()' id='guiGameStart' disabled>Start Game</button>
 <button onclick='getServerState()' id='guiUndoRefresh' disabled>Refresh (Undo)</button> 
-||  ||  || 
+
 <button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button>
 <button onclick='doTableChange()' id='guiTurnChangeTable' disabled>Validate Changes</button>
 <hr style="clear:left">
@@ -543,6 +556,11 @@ Table
 
 vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
 lepe vyresit konec hry<br>
+ukazat jinak nove/pridane karty<br>
+3 sloupce a lepsi layout stranky, top tlacitka plovouci<br>
+lepsi podbarveni aktivni karty<br>
+umoznit na konci jeste dolozit sve karty<br>
+nepreblikavat 2x provedenou zmenu (zkusit)<br>
 
 </body>
 </html>
