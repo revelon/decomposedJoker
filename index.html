@@ -12,18 +12,16 @@
 		div {margin: 2px; padding: 3px;}
 		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 2px DarkGreen);}
 		div.spades {background-color: White; color: Black;} 
-		div.clubs {background-color: Ivory; color: Black;}
-		div.hearts {background-color: MistyRose; color: Red;}
-		div.diamonds {background-color: PapayaWhip; color: Red;}
+		div.clubs {background-color: MistyRose; color: Black;}
+		div.hearts {background-color: Cornsilk; color: Red;}
+		div.diamonds {background-color: Ivory; color: Red;}
 		div.wildcard {background-color: White; color: DarkOrange;}
 		div#guiTable {column-count: 2;}
 		button {background-color: Gold; font-size: 1em;}
 		input {background-color: Pink; font-size: 1em; cursor: crosshair;}
-		h1 {color: White;}
 		button#guiTurnGetCard, button#guiTurnChangeTable {font-size: 1.25em; background-color: Beige}
 		button {font-family: serif;}
 		div#guiHand button:first-of-type, div#guiNewSets button:first-of-type, div#guiTable button:first-of-type {margin-right: 11px;}
-		button.big {font-size: 2.5em;}
 	</style>
 	<script>
 		"use strict";
@@ -367,22 +365,15 @@
 					nl.append(card);
 				});
 
-				if (enableEvents) {
-					if (groups[s].id != 0 && groups[s].cards.length) { // not for hand
-						const butt0 = el('button', "act0-" + groups[s].id, ' + ');
-						butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
-						nl.prepend(butt0);
-					}
-
-					if (groups[s].id !== 0) { // not for hand
-						const butt = el('button', "act-" + groups[s].id, ' + ');
-						butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
-						if (!groups[s].cards.length) {
-							butt.classList.add('big');	
-						}						
-						nl.append(butt);
-					}
+				if (enableEvents && groups[s].cards.length && groups[s].id != 0) {
+					const butt0 = el('button', "act0-" + groups[s].id, ' + ');
+					butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
+					nl.prepend(butt0);
+					const butt = el('button', "act-" + groups[s].id, ' + ');
+					butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
+					nl.append(butt);
 				}
+
 				gui.append(nl);
 			}
 		}
