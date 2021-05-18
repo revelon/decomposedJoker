@@ -20,8 +20,7 @@ class Player {
 
 	public function getPlayerInfo(string $activePlayer) : array {
 		return ['name' => $this->name, 'cards' => sizeOf($this->hand->getCards()), 
-			'active' => ($this->id === $activePlayer) ? 'active' : 'inactive',
-			'status' => ($this->won) ? 'winner' : 'playing',
+			'status' => ($this->won) ? 'winner' : ($this->id === $activePlayer) ? 'active' : 'idle',
 			'canAddCards' => $this->canAddCards ];
 	}
 

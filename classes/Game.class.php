@@ -18,7 +18,13 @@ class Game {
 	}
 
 	public function assignPlayer(string $name) : string {
-		$p = new Player($name);
+		foreach ($this->players as $cp) {
+			if (strtolower($cp->getName()) === trim(strtolower($name))) {
+				dbg('refusing to register - player of similar name already exists', $name);
+				return '';
+			}
+		}
+		$p = new Player(trim($name));
 		$this->players[$p->getId()] = $p;
 		dbg("player set", $p);
 		return $p->getId();
@@ -204,7 +210,7 @@ class Game {
 			new Card(11,Card::SPADES),
 			new Card(12,Card::SPADES),
 			new Card(13,Card::SPADES),
-/*
+
 			new Card(1,	Card::HEARTS),
 			new Card(2,	Card::HEARTS),
 			new Card(3,	Card::HEARTS),
@@ -288,7 +294,7 @@ class Game {
 			new Card(11,Card::CLUBS),
 			new Card(12,Card::CLUBS),
 			new Card(13,Card::CLUBS),
-*/
+
 			new Card(1,	Card::DIAMONDS),
 			new Card(2,	Card::DIAMONDS),
 			new Card(3,	Card::DIAMONDS),

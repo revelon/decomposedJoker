@@ -5,18 +5,17 @@
 	<title>Decomposed Joker GUI</title>
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; display: inline-block; cursor: pointer;}
+		html {background: radial-gradient(circle, rgba(166,221,129,1) 13%, rgba(37,152,53,1) 84%); height:100%;}
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 55px; display: inline-block; cursor: pointer; border: 1px solid black; margin-left: -10px; border-radius: 4px; background: white; user-select: none;}
 		div#guiPlayers div {width: 180px; display: inline-block;}
 		div#guiPlayers div.winner {color: gold; font-size: 2em;}
-		div {border: 2px dotted gray; margin: 2px; padding: 3px;}
-		.active {border: 2px solid DarkGreen; filter: drop-shadow(2px 2px 6px DarkGreen);}
-		div.spades {background-color: LightSteelBlue;}
-		div.clubs {background-color: LightGray;}
-		div.hearts {background-color: LightSalmon;}
-		div.diamonds {background-color: LightCoral;}
-		div.wildcard {background-color: Tan;}
-		div#guiTable {column-count: 2; background-color: Ivory;}
-		button {background-color: PaleGreen; font-size: 1em;}
+		div {margin: 2px; padding: 3px;}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-4px 2px 2px DarkGreen);}
+		div.spades, div.clubs {color: Black;}
+		div.hearts, div.diamonds {color: Red;}
+		div.wildcard {color: DarkOrange; margin-top: -1px;}
+		div#guiTable {column-count: 2;}
+		button {background-color: Gold; font-size: 1em;}
 		input {background-color: Pink; font-size: 1em; cursor: crosshair;}
 	</style>
 	<script>
@@ -51,7 +50,7 @@
 		var allCards = {}; // all current game cards in the full deck
 		var playerId = ''; // current player secret identifier
 		var canModifyTable = false; // flag, if user already made one full set and can add cards to other sets
-		var players = {}; // all players invorlved in current game
+		var players = {}; // all players involved in current game
 		var hand = []; // players card in hand
 		var sets = []; // preparing, unfinished, unvalidated, new sets of cards (client side only)
 		var table = []; // playing table with validated sets of cards (server side)
@@ -157,9 +156,9 @@
 
 		async function getGameInfo(render = false) {
 			console.log('method: getGameInfo');
-			if (!window.myTurn) {
+			if (!window.myTurn && !document.hidden) {
 				document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
-				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);					
+				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
 				try {
 					const p = await postData({ action: 'getGameInfo', 'playerId': window.playerId });
 					// changed state?
@@ -170,6 +169,10 @@
 					console.dir('players and gameStatus', window.players, window.gameStatus);
 					if (render) {
 						renderGameInfo(change);
+					}
+					if (window.gameStatus == 'finished') {
+						startAutoRefresh(true);
+						alert('Game Over');
 					}
 				} catch (err) {
 					console.dir('err', err);
@@ -189,7 +192,7 @@
 					return;
 				}
 				if (!window.tick) {
-					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 2000);
+					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1500);
 				} else {
 					//window.clearInterval(window.tick);
 				}
@@ -314,7 +317,8 @@
 				showTurnEnd();
 				window.canModifyTable = true;
 				if (turn == "won") {
-					alert('Victory!!')
+					alert('Victory!!');
+					startAutoRefresh(true);
 				} else {
 					window.myTurn = false;
 				}
@@ -341,7 +345,7 @@
 			gui.innerHTML = '';
 			for(const s in groups) {
 				console.log('rendering group_id', groups[s].id);
-				const nl = el('div', groups[s].id, `id: ${groups[s].id}`);
+				const nl = el('div', groups[s].id);
 
 				groups[s].cards.forEach( c => { // add cards
 					const card = renderCard(c);
@@ -352,7 +356,7 @@
 				});
 
 				if (enableEvents) {
-					if (groups[s].id != 0) { // not for hand
+					if (groups[s].id != 0 && groups[s].cards.length) { // not for hand
 						const butt0 = el('button', "act0-" + groups[s].id, ' + ');
 						butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
 						nl.prepend(butt0);
@@ -369,10 +373,35 @@
 		}
 
 		function addActiveCardsToSet(setId, toTheStart = false) {
-			console.log('method: addActiveCardsToSet', setId, toTheStart, window.actives, window.sets);
+			console.log('method: addActiveCardsToSet', setId, toTheStart, window.actives, JSON.stringify(window.sets, null, 2), JSON.stringify(window.table, null, 2));
 			if (!window.gameStatus == 'playing' || !window.myTurn) {
-				return;
-			}			
+				return false;
+			}
+
+			// validate if there is not card in the actives from the target set, which is invalid (for the time being)
+			try {
+				window.actives.forEach( a => {
+					window.table.forEach( (grp, idx) => {
+						const x = grp.cards.indexOf(a);
+						if ((x > -1) && (setId == grp.id)) {
+							console.dir('invalid!!!');
+							throw "Invalid card : set combination";
+						}
+					});
+					window.sets.forEach( (grp, idx) => {
+						const x = grp.cards.indexOf(a);
+						if ((x > -1) && (setId == grp.id)) {
+							console.dir('invalid!!!');
+							throw "Invalid card : set combination";
+						}
+					});
+				});
+			} catch (err) {
+				console.dir('validation fail', err);
+				return false;	
+			}
+
+			console.dir('continue SET modification after passed validations');
 
 			if (toTheStart) {
 				window.actives.reverse();
@@ -421,7 +450,7 @@
 
 		function renderCard(id) {
 			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&#10029;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;'};
-			let card = el('div', id, `${m[window.allCards[id].value]} ${m[window.allCards[id].type]}`);
+			let card = el('div', id, `${m[window.allCards[id].value]}<br>&nbsp;&nbsp;${m[window.allCards[id].type]}<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m[window.allCards[id].value]}`);
 			card.classList.add(window.allCards[id].type, window.allCards[id].value);
 			return card;
 		}
@@ -431,13 +460,15 @@
 			window.guiPlayers.innerHTML = '';
 			for(const p in window.players) {
 				let plr = el('div', null, `${window.players[p].name} (${window.players[p].cards} cards)`);
-				plr.classList.add(window.players[p].active, window.players[p].status);
+				plr.classList.add(window.players[p].status);
 				guiPlayers.append(plr);
 			}
 
 			if (refresh) {
 				if (window.gameStatus == 'playing') {
 					document.getElementById('guiGameStart').setAttribute('disabled', true);
+					document.getElementById('guiUndoRefresh').removeAttribute('disabled');
+					document.getElementById('guiEmptySet').removeAttribute('disabled');
 				}
 				getServerState();
 			}
@@ -483,28 +514,30 @@
 
 <button onclick='initGame()' id='guiGameInit'>Init Game</button>
 <button onclick='joinGame()' id='guiGameJoin'>Join Game</button>
-<button onclick='registerPlayer()' id='guiRegPlayer' disabled>registerPlayer</button>
-<button onclick='startGame()' id='guiGameStart' disabled>start game / set me as active player</button>
-<input type='button' onclick='getServerState()' value='refresh / reset'/> 
+<button onclick='registerPlayer()' id='guiRegPlayer' disabled>Register Player</button>
+<button onclick='startGame()' id='guiGameStart' disabled>Start Game (set me as active player)</button>
+<button onclick='getServerState()' id='guiUndoRefresh' disabled>Refresh (Undo)</button> 
 ||  ||  || 
-<button onclick='getCard(true)' id='guiTurnGetCard' disabled>getCard and end turn</button>
-<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>validate all groups and end turn</button>
+<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button>
+<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>Validate Changes</button>
 <hr>
 Players:
 <div id='guiPlayers'></div>
+<hr>
 Hand:
 <div id='guiHand'></div>
-NewSets: <button onclick='createEmptySet()'>create Empty Set</button>
+<hr>
+NewSets: <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
 <div id='guiNewSets'></div>
+<hr>
 Table
 <div id='guiTable'></div>
 <hr>
 
-vyresit lepe zamky na fakt, ze nekdo muze chtit v jendom kole pripravit set a rovnou dokladat (poprve)<br>
-inteligentnejsi refreshe vseho - jen kdyz nejsem na tahu, jinak nedelat<br>
-mozna kdyz neni nekdo na tahu tak disablovat vsechno bude nejlepsi<br>
-osetrit duplicitni jmena hracu
-
+vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
+lepe vyresit konec hry<br>
+mozna dovolit konec tahu i jen s oznacenymi kartami ?<br>
+click na pridani do stejne groupy failuje<br>
 
 </body>
 </html>
