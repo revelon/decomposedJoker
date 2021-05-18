@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="cs">
+<html lang="cs" id="html">
 <head>
 	<meta charset="utf-8">
 	<title>Decomposed Joker GUI</title>
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
-		html {background: radial-gradient(circle, rgba(166,221,129,1) 13%, rgba(37,152,53,1) 84%); height:100%; color: White; font-family: serif;}
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 55px; display: inline-block; cursor: pointer; border: 1px solid Gray; margin-left: -10px; border-radius: 4px; user-select: none; break-inside: avoid;}
+		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
+		body {margin: 0px;}
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 55px; display: inline-block; cursor: pointer; border: 1px solid Gray; margin-left: -8px; border-radius: 4px; user-select: none; break-inside: avoid;}
+		div#guiHand, div#guiNewSets, div#guiTable {padding-left: 10px;}
 		div#guiPlayers div {width: 180px; display: inline-block;}
 		div#guiPlayers div.winner {color: gold; font-size: 2em;}
-		div {margin: 2px; padding: 3px;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px DarkGreen); background-color: LightCyan !important;}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Gray;}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
@@ -26,6 +27,42 @@
 		button {font-family: serif;}
 		div#guiHand button:first-of-type, div#guiNewSets button:first-of-type, div#guiTable button:first-of-type {margin-right: 11px;}
 		button.big {font-size: 2.5em;}
+
+		.wrapper {
+			display: grid;
+    		grid-gap: 10px;
+			grid-template-columns: repeat(4, [col] 24.5% );
+			grid-template-rows: repeat(3, [row] auto );
+		}
+
+		.box {
+			background-color: rgba(0,0,0,0.4);
+			border-radius: 4px;
+			padding: 4px;
+			margin: 4px;
+		}
+
+		.a {
+			grid-column: col / span 3;
+			grid-row: row;
+		}
+		.b {
+			grid-column: col 4;
+			grid-row: row;
+		}
+		.c {
+			grid-column: col / span 2;
+			grid-row: row 2;
+		}
+		.d {
+			grid-column: col 3 / span 2;
+			grid-row: row 2;
+		}
+		.e {
+			grid-column: col / span 4;
+			grid-row: row 3;
+		}
+
 	</style>
 	<script>
 		"use strict";
@@ -201,7 +238,7 @@
 					return;
 				}
 				if (!window.tick) {
-					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1500);
+					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1000);
 				} else {
 					//window.clearInterval(window.tick);
 				}
@@ -520,48 +557,66 @@
 			document.getElementById("indicator").animate(
 				[
 					{ letterSpacing: '1px', color: '#000' },
-					{ letterSpacing: '10px', color: '#0a0' },
+					{ letterSpacing: '5px', color: '#0a0' },
 					{ letterSpacing: '1px', color: '#000' }
-				], 500);
+				], 700);
+			document.getElementById("html").animate(
+				[
+					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' },
+					{ background: 'Black' },
+					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' }
+				], 700);
 		}
 
 	</script>
 </head>
 <body>
 
-<img src="joker.svg" width="128" style="float: left">
-<h1 id="indicator">Decomposed Joker</h1>
+<div class="wrapper">
+	<div class="box a">
+		<img src="joker.svg" width="128" style="float: left">
+		<h1 id="indicator">Decomposed Joker</h1>
 
-<button onclick='initGame()' id='guiGameInit'>Init Game</button>
-<button onclick='joinGame()' id='guiGameJoin'>Join Game</button>
-<button onclick='registerPlayer()' id='guiRegPlayer' disabled>Register Player</button>
-<button onclick='startGame()' id='guiGameStart' disabled>Start Game</button>
-<button onclick='getServerState()' id='guiUndoRefresh' disabled>Refresh (Undo)</button> 
+		<button onclick='initGame()' id='guiGameInit'>Init Game</button>
+		<button onclick='joinGame()' id='guiGameJoin'>Join Game</button>
+		<button onclick='registerPlayer()' id='guiRegPlayer' disabled>Register Player</button>
+		<button onclick='startGame()' id='guiGameStart' disabled>Start Game</button>
+		<button onclick='getServerState()' id='guiUndoRefresh' disabled>Refresh (Undo)</button>
 
-<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button>
-<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>Validate Changes</button>
-<hr style="clear:left">
-Players:
-<div id='guiPlayers'></div>
-<hr>
-Hand:
-<div id='guiHand'></div>
-<hr>
-NewSets: <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
-<div id='guiNewSets'></div>
-<hr>
-Table
-<div id='guiTable'></div>
-<hr>
+		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button>
+		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>Validate Changes</button>
+	</div>
 
-vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
-lepe vyresit konec hry<br>
-ukazat jinak nove/pridane karty<br>
-3 sloupce a lepsi layout stranky, top tlacitka plovouci<br>
-lepsi podbarveni aktivni karty<br>
-umoznit na konci jeste dolozit sve karty<br>
-nepreblikavat 2x provedenou zmenu (zkusit)<br>
+	<div class="box b">
+		Players:
+		<div id='guiPlayers'></div>
+	</div>
 
+	<div class="box c">
+		Hand:
+		<div id='guiHand'></div>
+	</div>
+
+	<div class="box d">
+		NewSets: <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
+		<div id='guiNewSets'></div>
+	</div>
+
+	<div class="box e">
+		Table
+		<div id='guiTable'></div>
+
+		<hr>
+		vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
+		lepe vyresit konec hry<br>
+		ukazat jinak nove/pridane karty<br>
+		3 sloupce a lepsi layout stranky, top tlacitka plovouci<br>
+		lepsi podbarveni aktivni karty<br>
+		umoznit na konci jeste dolozit sve karty<br>
+		nepreblikavat 2x provedenou zmenu (zkusit)<br>
+	</div>
+
+</div>
 </body>
 </html>
 
