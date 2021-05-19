@@ -7,11 +7,9 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 38px; height: 68px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding-left: 2px; font-size: 1.4em; vertical-align: middle;}
-		/*div#guiHand, div#guiNewSets, div#guiTable {padding-left: 10px;}*/
-		div#guiPlayers div {width: 180px; display: inline-block;}
-		div#guiPlayers div.winner {color: gold; font-size: 2em;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Gray;}
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px 2px; background-color: rgba(160,255,0,0.5); }
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black;}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
@@ -23,17 +21,16 @@
 		div > p:nth-of-type(3) {text-align: right;}
 		div#guiTable {column-count: 3;}
 		div#guiNewSets {column-count: 2;}
-		input {background-color: Pink; font-size: 1em; cursor: crosshair;}
 		div#actions {font-size: 1.6em; position: fixed; left: 74%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px;}
-		button {font-family: serif; display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1em; border-radius: 6px; margin: 0 0 0 2px;}
-		/*div#guiHand button:first-of-type, div#guiNewSets button:first-of-type, div#guiTable button:first-of-type {margin-right: 11px;}*/
-		button.big {font-size: 2.5em;}
+		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1em; border-radius: 6px; margin: 0 0 0 2px; font-family: serif;}
+		button.big {font-size: 2.2em;}
 		div div.changed {border: 2px dotted Red !important;}
 		span#dragTarget {cursor: move; color: black;}
+		h6 {font-style: italic; font-size: 1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -18px 0 0 -2px;}
 		/* main layout */
-		.wrapper {display: grid; grid-gap: 10px; grid-template-columns: repeat(4, [col] 24% ); grid-template-rows: repeat(3, [row] auto );}
-		.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 4px; margin: 4px;}
+		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(4, [col] 24.9% ); grid-template-rows: repeat(3, [row] auto );}
+		.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
 		.a {grid-column: col / span 3; grid-row: row;}
 		.b {grid-column: col 4; grid-row: row;}
 		.c {grid-column: col / span 2; grid-row: row 2;}
@@ -44,8 +41,6 @@
 	<script>
 		"use strict";
 
-		// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-		// Example POST method implementation:
 		async function postData(data = {}) {
 			// Default options are marked with *
 			const response = await fetch('api.php', {
@@ -55,7 +50,6 @@
 				credentials: 'same-origin', // include, *same-origin, omit
 				headers: {
 					'Content-Type': 'application/json'
-					// 'Content-Type': 'application/x-www-form-urlencoded',
 				},
 				redirect: 'follow', // manual, *follow, error
 				referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
@@ -169,6 +163,7 @@
 				}
 			} catch (err) {
 				console.dir('err', err);
+				showFailure();
 			}
 		}
 
@@ -188,6 +183,7 @@
 				}
 			} catch (err) {
 				console.dir('err', err);
+				showFailure();
 			}
 		}
 
@@ -270,6 +266,7 @@
 				}
 			} catch (err) {
 				console.dir('err', err);
+				showFailure();
 			}
 			if (render) {
 				await getHand(true);
@@ -327,6 +324,7 @@
 				return grp;
 			} catch (err) {
 				console.dir('err', err);
+				showFailure();
 				return false;
 			}
 		}
@@ -381,6 +379,7 @@
 				}
 			} catch (err) {
 				console.dir('err', err);
+				showFailure();
 			}
 		}
 
@@ -464,12 +463,13 @@
 				});
 			} catch (err) {
 				console.dir('validation fail', err);
+				showFailure();
 				return false;	
 			}
 
 			console.dir('continue SET modification after passed validations');
 
-			if (toTheStart) {
+			if (toTheStart && false) { // Jajca do not like it, skip it for now !!!!!
 				window.actives.reverse();
 			}
 
@@ -572,6 +572,15 @@
 				], 700);
 		}
 
+		function showFailure() {
+			document.getElementById("html").animate(
+				[
+					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' },
+					{ background: 'DarkRed' },
+					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' }
+				], 1000);
+		}
+
 		// several methods related to freagging main actions around screen 
 		var mouse1 = function(event) {
 			let shiftX = event.clientX - guiActions.getBoundingClientRect().left;
@@ -609,7 +618,7 @@
 <body>
 
 	<div id="actions">
-		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button> &nbsp; <span id='dragTarget'>&#9851;</span><br>
+		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button> &nbsp; &nbsp; <span id='dragTarget'>&#9851;</span><br>
 		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>Validate Changes</button>
 	</div>
 
@@ -626,33 +635,34 @@
 		</div>
 
 		<div class="box b">
-			Players:
+			<h6>Players</h6>
 			<div id='guiPlayers'></div>
 		</div>
 
 		<div class="box c">
-			Hand:
+			<h6>Hand</h6>
 			<div id='guiHand'></div>
 		</div>
 
 		<div class="box d">
-			NewSets: <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
+			<h6>NewSets</h6> <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
 			<div id='guiNewSets'></div>
 		</div>
 
 		<div class="box e">
-			Table:
+			<h6>Table</h6>
 			<div id='guiTable'></div>
-
-			<hr>
-			vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
-			lepe vyresit konec hry, omezit statusy?<br>
-			umoznit na konci jeste dolozit sve karty<br>
-			nepreblikavat 2x provedenou zmenu (zkusit)<br>
-			konfigurovatelne pocty sloupcu<br>
-			otocit logiku pridavani karet zleva (nebo konfigurovatelne?)<br>
-			zjednodusit statusy uzivatelu a hry?<br>
-			pridat podporu vice paralelnich her
+			<br>
+			<details>
+				vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
+				lepe vyresit konec hry, omezit statusy?<br>
+				umoznit na konci jeste dolozit sve karty<br>
+				nepreblikavat 2x provedenou zmenu (zkusit)<br>
+				konfigurovatelne pocty sloupcu<br>
+				otocit logiku pridavani karet zleva (nebo konfigurovatelne?)<br>
+				zjednodusit statusy uzivatelu a hry?<br>
+				pridat podporu vice paralelnich her
+			</details>
 		</div>
 	</div>
 

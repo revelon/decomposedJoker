@@ -24,13 +24,18 @@ switch ($data->action) {
 		break;
 	case "registerPlayer":
 		$play = Game::load(Game::FILENAME);
-		$pid = $play->assignPlayer($data->name);
-		if ($pid) {
-			$play->save();
-			echo json_encode( [ 'data' => $pid, 'dbg' => ob_get_clean() ] );
+		if ($play->status === 'inactive') {
+			$pid = $play->assignPlayer($data->name);
+			if ($pid) {
+				$play->save();
+				echo json_encode( [ 'data' => $pid, 'dbg' => ob_get_clean() ] );
+			} else {
+				http_response_code(403);
+				echo json_encode( [ 'message' => 'Player with similar name is already registered', 'dbg' => ob_get_clean() ] ); 
+			}
 		} else {
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Player with similar name is already registered', 'dbg' => ob_get_clean() ] ); 
+			echo json_encode( [ 'message' => 'Game has either started or finished already', 'dbg' => ob_get_clean() ] );
 		}
 		break;
 	case "setActivePlayer": // and start game
