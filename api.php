@@ -47,10 +47,15 @@ switch ($data->action) {
 		}
 		break;
 	case "getGameInfo":
-		$play = Game::load(Game::FILENAME);
-		echo json_encode( [ 'data' => [ 'players' => $play->getPlayersInfo(), 'gameStatus' => $play->status , 
-			'amIActivePlayer' => ($play->getActivePlayerId() && $play->getActivePlayerId() === $data->playerId) ], 
-			'dbg' => ob_get_clean() ] );
+		$changedAt = filemtime(Game::FILENAME); // unit timestamp
+		if ($data->knownStateFrom < $changedAt) { // performance optimization for very often requests
+			$play = Game::load(Game::FILENAME);
+			echo json_encode( [ 'data' => [ 'players' => $play->getPlayersInfo(), 'gameStatus' => $play->status , 
+				'amIActivePlayer' => ($play->getActivePlayerId() && $play->getActivePlayerId() === $data->playerId),
+				'lastModifiedAt' => $changedAt ], 'dbg' => ob_get_clean() ] );
+		} else {
+			http_response_code(304);
+		}
 		break;
 	case "getHand":
 		$play = Game::load(Game::FILENAME);

@@ -7,8 +7,8 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 56px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Gray; margin-left: -8px; border-radius: 4px; user-select: none; break-inside: avoid; padding-left: 2px;}
-		div#guiHand, div#guiNewSets, div#guiTable {padding-left: 10px;}
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 38px; height: 68px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding-left: 2px; font-size: 1.4em; vertical-align: middle;}
+		/*div#guiHand, div#guiNewSets, div#guiTable {padding-left: 10px;}*/
 		div#guiPlayers div {width: 180px; display: inline-block;}
 		div#guiPlayers div.winner {color: gold; font-size: 2em;}
 		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Gray;}
@@ -17,52 +17,28 @@
 		div.hearts {background-color: Cornsilk; color: Red;}
 		div.diamonds {background-color: Ivory; color: Red;}
 		div.wildcard {background-color: White; color: DarkOrange; background-image: url(joker.svg); background-repeat:no-repeat; background-position: center center; }
+		div > p {margin: 0; padding: 0;}
+		div > p:nth-of-type(1) {text-align: left;}
+		div > p:nth-of-type(2) {text-align: center;}
+		div > p:nth-of-type(3) {text-align: right;}
 		div#guiTable {column-count: 3;}
-		button {background-color: Gold; font-size: 1em;}
+		div#guiNewSets {column-count: 2;}
 		input {background-color: Pink; font-size: 1em; cursor: crosshair;}
-		button#guiTurnGetCard, button#guiTurnChangeTable {
-			font-size: 1.6em; background-color: Beige; position: fixed; right: 30px; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px;}
-		button#guiTurnGetCard {bottom: 80px;}
-		button#guiTurnChangeTable {bottom: 30px;}
-		button {font-family: serif;}
-		div#guiHand button:first-of-type, div#guiNewSets button:first-of-type, div#guiTable button:first-of-type {margin-right: 11px;}
+		div#actions {font-size: 1.6em; position: fixed; left: 74%; top: 80%;}
+		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px;}
+		button {font-family: serif; display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1em; border-radius: 6px; margin: 0 0 0 2px;}
+		/*div#guiHand button:first-of-type, div#guiNewSets button:first-of-type, div#guiTable button:first-of-type {margin-right: 11px;}*/
 		button.big {font-size: 2.5em;}
-		div div.changed {border: 3px dotted Red !important;}
-
-		.wrapper {
-			display: grid;
-    		grid-gap: 10px;
-			grid-template-columns: repeat(4, [col] 24% );
-			grid-template-rows: repeat(3, [row] auto );
-		}
-
-		.box {
-			background-color: rgba(0,0,0,0.4);
-			border-radius: 4px;
-			padding: 4px;
-			margin: 4px;
-		}
-
-		.a {
-			grid-column: col / span 3;
-			grid-row: row;
-		}
-		.b {
-			grid-column: col 4;
-			grid-row: row;
-		}
-		.c {
-			grid-column: col / span 2;
-			grid-row: row 2;
-		}
-		.d {
-			grid-column: col 3 / span 2;
-			grid-row: row 2;
-		}
-		.e {
-			grid-column: col / span 4;
-			grid-row: row 3;
-		}
+		div div.changed {border: 2px dotted Red !important;}
+		span#dragTarget {cursor: move; color: black;}
+		/* main layout */
+		.wrapper {display: grid; grid-gap: 10px; grid-template-columns: repeat(4, [col] 24% ); grid-template-rows: repeat(3, [row] auto );}
+		.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 4px; margin: 4px;}
+		.a {grid-column: col / span 3; grid-row: row;}
+		.b {grid-column: col 4; grid-row: row;}
+		.c {grid-column: col / span 2; grid-row: row 2;}
+		.d {grid-column: col 3 / span 2; grid-row: row 2;}
+		.e {grid-column: col / span 4; grid-row: row 3;}
 
 	</style>
 	<script>
@@ -85,13 +61,15 @@
 				referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
 				body: JSON.stringify(data, null, 2) // body data type must match "Content-Type" header
 			});
-			const ret = await response.json(); // parses JSON response into native JavaScript objects
-			console.dir('server call returned debug:', ret.dbg);
+			if (response.status == 304) {
+				throw "Server responded with not-modified status";
+			} 
 			if (response.status > 399) {
 				throw "Server responded error with: " + ret.message;
-			} else {
-				return ret.data;
 			}
+			const ret = await response.json(); // parses JSON response into native JavaScript objects
+			console.dir('server call returned debug:', ret.dbg);
+			return ret.data;
 		}
 
 		var allCards = {}; // all current game cards in the full deck
@@ -99,19 +77,38 @@
 		var canModifyTable = false; // flag, if user already made one full set and can add cards to other sets
 		var players = {}; // all players involved in current game
 		var hand = []; // player's cards in hand
-		var lastHandCards = []; // previous player's cards in hand
+		var lastHandCards = {a: [], b: []}; // previous player's cards in hand history, last two changes
 		var sets = []; // preparing, unfinished, unvalidated, new sets of cards (client side only)
 		var table = []; // playing table with validated sets of cards (server side)
-		var lastTableCards = []; // previous table's cards
+		var lastTableCards = {a: [], b: []}; // previous table's cards history, last two changes
 		var actives = []; // stack of currently selected cards (to create new set or append to existing one)
 		var gameStatus = 'inactive'; // current game status: inactive | playing | finished
 		var myTurn = false; // flag if it is this player's turn or not
 		var tick; // holder for refresing/ticking setInterval object
-
+		var lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
 		var guiHand;
 		var guiNewSets;
 		var guiTable;
 		var guiPlayers;
+		var guiActions;
+
+		window.addEventListener('load', (event) => {
+			console.log('method: document loaded...');
+
+			window.guiHand = document.getElementById('guiHand');
+			window.guiHand.innerHTML = '';
+			window.guiNewSets = document.getElementById('guiNewSets');
+			window.guiNewSets.innerHTML = '';			
+			window.guiTable = document.getElementById('guiTable');
+			window.guiTable.innerHTML = '';
+			window.guiPlayers = document.getElementById('guiPlayers');
+			window.guiPlayers.innerHTML = '';
+
+			window.guiActions = document.getElementById('actions');
+			let dt = document.getElementById('dragTarget');
+			dt.onmousedown = mouse1;
+			dt.ondragstart = mouse2;
+		});
 
 		async function initGame() {
 			console.log('method: initGame');
@@ -146,15 +143,6 @@
 			hand.id = 0; // 0 = special setId and is always player's hand
 			hand.cards = [];
 			window.hand.push(hand);
-
-			window.guiHand = document.getElementById('guiHand');
-			window.guiHand.innerHTML = '';
-			window.guiNewSets = document.getElementById('guiNewSets');
-			window.guiNewSets.innerHTML = '';			
-			window.guiTable = document.getElementById('guiTable');
-			window.guiTable.innerHTML = '';
-			window.guiPlayers = document.getElementById('guiPlayers');
-			window.guiPlayers.innerHTML = '';
 
 			document.getElementById('guiGameInit').setAttribute('disabled', true);
 			document.getElementById('guiGameJoin').setAttribute('disabled', true);
@@ -209,12 +197,13 @@
 				document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
 				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
 				try {
-					const p = await postData({ action: 'getGameInfo', 'playerId': window.playerId });
+					const p = await postData({ action: 'getGameInfo', 'playerId': window.playerId, 'knownStateFrom': window.lastModifiedAt });
 					// changed state?
 					const change = (window.gameStatus != p.gameStatus || window.myTurn != p.amIActivePlayer) ? true : false;
 					window.gameStatus = p.gameStatus;
 					window.players = p.players;
 					window.myTurn = p.amIActivePlayer;
+					window.lastModifiedAt = p.lastModifiedAt;
 					console.dir('players and gameStatus', window.players, window.gameStatus);
 					if (render) {
 						renderGameInfo(change);
@@ -258,7 +247,8 @@
 			try {
 				const hand = await postData({ action: 'getHand', 'playerId': window.playerId });
 				// store previous hand cards
-				window.lastHandCards = [...window.hand[0].cards];
+				window.lastHandCards.b = [...window.lastHandCards.a];
+				window.lastHandCards.a = [...window.hand[0].cards];
 				window.hand[0].cards = hand;
 				console.dir('getHand', window.hand);
 			} catch (err) {
@@ -297,9 +287,10 @@
 				const tbl = await postData({ action: 'getTable', 'playerId': window.playerId });
 
 				// store previous table cards
-				window.lastTableCards = [];
+				window.lastTableCards.b = [...window.lastTableCards.a];
+				window.lastTableCards.a = [];
 				window.table.forEach( grp => {
-					window.lastTableCards = grp.cards.concat(window.lastTableCards);
+					window.lastTableCards.a = grp.cards.concat(window.lastTableCards.a);
 				});
 
 				window.table = [];
@@ -325,7 +316,7 @@
 			window.actives = [];
 			window.sets = [];
 			createEmptySet();
-			renderCardGroups(window.sets, window.guiNewSets, []);
+			renderCardGroups(window.sets, window.guiNewSets, {a: [], b: []});
 		}
 
 		async function validateGroup(group) {
@@ -403,7 +394,7 @@
 			set.cards = [];
 			console.dir(set);
 			window.sets.push(set);
-			renderCardGroups(window.sets, window.guiNewSets, []);
+			renderCardGroups(window.sets, window.guiNewSets, {a: [], b: []});
 		}
 
 		function renderCardGroups(groups, gui, previousIds, enableEvents = true) {
@@ -418,8 +409,8 @@
 					if (enableEvents) {
 						card.addEventListener('click', (e) => activateCard(c), true);
 					}
-					// mark cards new from previous known state
-					if (previousIds.indexOf(c) == -1) {
+					// mark cards new from two previous known states
+					if (previousIds.a.indexOf(c) == -1 || previousIds.b.indexOf(c) == -1) {
 						card.classList.add('changed');
 						console.dir('adding changed class to card id', c);
 					}
@@ -518,14 +509,14 @@
 			});
 
 			window.actives = [];
-			renderCardGroups(window.sets, window.guiNewSets, []);
+			renderCardGroups(window.sets, window.guiNewSets, {a: [], b: []});
 			renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 			renderCardGroups(window.table, window.guiTable, window.lastTableCards, window.canModifyTable);
 		}
 
 		function renderCard(id) {
-			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;'};
-			let card = el('div', id, `${m[window.allCards[id].value]}<br>&nbsp;&nbsp;${m[window.allCards[id].type]}<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m[window.allCards[id].value]}`);
+			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&nbsp;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;'};
+			let card = el('div', id, `<p>${m[window.allCards[id].value]}</p><p>${m[window.allCards[id].type]}</p><p>${m[window.allCards[id].value]}</p>`);
 			card.classList.add(window.allCards[id].type, window.allCards[id].value);
 			return card;
 		}
@@ -581,60 +572,89 @@
 				], 700);
 		}
 
+		// several methods related to freagging main actions around screen 
+		var mouse1 = function(event) {
+			let shiftX = event.clientX - guiActions.getBoundingClientRect().left;
+			let shiftY = event.clientY - guiActions.getBoundingClientRect().top;
+			document.body.append(guiActions);
+			moveAt(event.pageX, event.pageY);
+
+			// moves the ball at (pageX, pageY) coordinates
+			// taking initial shifts into account
+			function moveAt(pageX, pageY) {
+				guiActions.style.left = pageX - shiftX + 'px';
+				guiActions.style.top = pageY - shiftY + 'px';
+			}
+
+			function onMouseMove(event) {
+				moveAt(event.pageX, event.pageY);
+			}
+
+			// move the ball on mousemove
+			document.addEventListener('mousemove', onMouseMove);
+
+			// drop the ball, remove unneeded handlers
+			guiActions.onmouseup = function() {
+				document.removeEventListener('mousemove', onMouseMove);
+				guiActions.onmouseup = null;
+			}
+		}
+
+		var mouse2 = function() {
+  			return false;
+		}
+
 	</script>
 </head>
 <body>
 
-<div class="wrapper">
-	<div class="box a">
-		<img src="joker.svg" width="128" style="float: left">
-		<h1 id="indicator">Decomposed Joker</h1>
-
-		<button onclick='initGame()' id='guiGameInit'>Init Game</button>
-		<button onclick='joinGame()' id='guiGameJoin'>Join Game</button>
-		<button onclick='registerPlayer()' id='guiRegPlayer' disabled>Register Player</button>
-		<button onclick='startGame()' id='guiGameStart' disabled>Start Game</button>
-		<button onclick='getServerState()' id='guiUndoRefresh' disabled>Refresh (Undo)</button>
-
-		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button>
+	<div id="actions">
+		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button> &nbsp; <span id='dragTarget'>&#9851;</span><br>
 		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>Validate Changes</button>
 	</div>
 
-	<div class="box b">
-		Players:
-		<div id='guiPlayers'></div>
+	<div class="wrapper">
+		<div class="box a">
+			<img src="joker.svg" width="128" style="float: left">
+			<h1 id="indicator">Decomposed Joker</h1>
+
+			<button onclick='initGame()' id='guiGameInit'>Init Game</button>
+			<button onclick='joinGame()' id='guiGameJoin'>Join Game</button>
+			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>Register Player</button>
+			<button onclick='startGame()' id='guiGameStart' disabled>Start Game</button>
+			<button onclick='getServerState()' id='guiUndoRefresh' disabled>Refresh (Undo)</button>
+		</div>
+
+		<div class="box b">
+			Players:
+			<div id='guiPlayers'></div>
+		</div>
+
+		<div class="box c">
+			Hand:
+			<div id='guiHand'></div>
+		</div>
+
+		<div class="box d">
+			NewSets: <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
+			<div id='guiNewSets'></div>
+		</div>
+
+		<div class="box e">
+			Table:
+			<div id='guiTable'></div>
+
+			<hr>
+			vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
+			lepe vyresit konec hry, omezit statusy?<br>
+			umoznit na konci jeste dolozit sve karty<br>
+			nepreblikavat 2x provedenou zmenu (zkusit)<br>
+			konfigurovatelne pocty sloupcu<br>
+			otocit logiku pridavani karet zleva (nebo konfigurovatelne?)<br>
+			zjednodusit statusy uzivatelu a hry?<br>
+			pridat podporu vice paralelnich her
+		</div>
 	</div>
 
-	<div class="box c">
-		Hand:
-		<div id='guiHand'></div>
-	</div>
-
-	<div class="box d">
-		NewSets: <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
-		<div id='guiNewSets'></div>
-	</div>
-
-	<div class="box e">
-		Table
-		<div id='guiTable'></div>
-
-		<hr>
-		vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
-		lepe vyresit konec hry, omezit statusy?<br>
-		ukazat jinak nove/pridane karty<br>
-		lepsi podbarveni aktivni karty<br>
-		umoznit na konci jeste dolozit sve karty<br>
-		nepreblikavat 2x provedenou zmenu (zkusit)<br>
-		optimalizovat pres cas souboru caste deserializace<br>
-		jiny joker s obrazkem a celkove asi vetsi obrazky<br>
-		draggable hot buttons s konfigurovatelnymi sloupci?<br>
-		otocit logiku pridavani karet zleva (nebo konfigurovatelne?)<br>
-		zjednodusit statusy uzivatelu a hry<br>
-
-	</div>
-
-</div>
 </body>
 </html>
-
