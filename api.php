@@ -65,9 +65,9 @@ switch ($data->action) {
 	case "getCard":
 		$play = Game::load(Game::FILENAME);
 		if ($play->getActivePlayerId() === $data->playerId && $play->doTurnAsGetCard($data->playerId)) {
-			$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
+			//$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 			$play->save();
-			echo json_encode( [ 'data' => $hand, 'dbg' => ob_get_clean() ] );
+			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
 		} else {
 			http_response_code(403);
 			// many different errors should happen !!

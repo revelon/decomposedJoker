@@ -7,7 +7,7 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 55px; display: inline-block; cursor: pointer; border: 1px solid Gray; margin-left: -8px; border-radius: 4px; user-select: none; break-inside: avoid;}
+		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 34px; height: 56px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Gray; margin-left: -8px; border-radius: 4px; user-select: none; break-inside: avoid; padding-left: 2px;}
 		div#guiHand, div#guiNewSets, div#guiTable {padding-left: 10px;}
 		div#guiPlayers div {width: 180px; display: inline-block;}
 		div#guiPlayers div.winner {color: gold; font-size: 2em;}
@@ -16,8 +16,8 @@
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
 		div.diamonds {background-color: Ivory; color: Red;}
-		div.wildcard {background-color: White; color: DarkOrange;}
-		div#guiTable {column-count: 2;}
+		div.wildcard {background-color: White; color: DarkOrange; background-image: url(joker.svg); background-repeat:no-repeat; background-position: center center; }
+		div#guiTable {column-count: 3;}
 		button {background-color: Gold; font-size: 1em;}
 		input {background-color: Pink; font-size: 1em; cursor: crosshair;}
 		button#guiTurnGetCard, button#guiTurnChangeTable {
@@ -27,11 +27,12 @@
 		button {font-family: serif;}
 		div#guiHand button:first-of-type, div#guiNewSets button:first-of-type, div#guiTable button:first-of-type {margin-right: 11px;}
 		button.big {font-size: 2.5em;}
+		div div.changed {border: 3px dotted Red !important;}
 
 		.wrapper {
 			display: grid;
     		grid-gap: 10px;
-			grid-template-columns: repeat(4, [col] 24.5% );
+			grid-template-columns: repeat(4, [col] 24% );
 			grid-template-rows: repeat(3, [row] auto );
 		}
 
@@ -82,7 +83,7 @@
 				},
 				redirect: 'follow', // manual, *follow, error
 				referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-				body: JSON.stringify(data) // body data type must match "Content-Type" header
+				body: JSON.stringify(data, null, 2) // body data type must match "Content-Type" header
 			});
 			const ret = await response.json(); // parses JSON response into native JavaScript objects
 			console.dir('server call returned debug:', ret.dbg);
@@ -97,9 +98,11 @@
 		var playerId = ''; // current player secret identifier
 		var canModifyTable = false; // flag, if user already made one full set and can add cards to other sets
 		var players = {}; // all players involved in current game
-		var hand = []; // players card in hand
+		var hand = []; // player's cards in hand
+		var lastHandCards = []; // previous player's cards in hand
 		var sets = []; // preparing, unfinished, unvalidated, new sets of cards (client side only)
 		var table = []; // playing table with validated sets of cards (server side)
+		var lastTableCards = []; // previous table's cards
 		var actives = []; // stack of currently selected cards (to create new set or append to existing one)
 		var gameStatus = 'inactive'; // current game status: inactive | playing | finished
 		var myTurn = false; // flag if it is this player's turn or not
@@ -140,7 +143,7 @@
 			console.log('method: initHeper');
 
 			let hand = {};
-			hand.id = 0; // 0 special setId and is always player's hand
+			hand.id = 0; // 0 = special setId and is always player's hand
 			hand.cards = [];
 			window.hand.push(hand);
 
@@ -253,13 +256,16 @@
 				return;
 			}
 			try {
-				window.hand[0].cards = await postData({ action: 'getHand', 'playerId': window.playerId });
+				const hand = await postData({ action: 'getHand', 'playerId': window.playerId });
+				// store previous hand cards
+				window.lastHandCards = [...window.hand[0].cards];
+				window.hand[0].cards = hand;
 				console.dir('getHand', window.hand);
 			} catch (err) {
 				console.dir('err', err);
 			}
 			if (render) {
-				renderCardGroups(window.hand, window.guiHand);
+				renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 			}
 		}
 
@@ -269,14 +275,14 @@
 				return;
 			}
 			try {
-				window.hand[0].cards = await postData({ action: 'getCard', 'playerId': window.playerId });
-				console.dir('getCard', window.hand);
-				window.myTurn = false;
+				if(await postData({ action: 'getCard', 'playerId': window.playerId })) {
+					window.myTurn = false;
+				}
 			} catch (err) {
 				console.dir('err', err);
 			}
 			if (render) {
-				renderCardGroups(window.hand, window.guiHand);
+				await getHand(true);
 			}
 			showTurnEnd();
 		}
@@ -286,8 +292,16 @@
 			if (!window.gameStatus == 'playing') {
 				return;
 			}
+
 			try {
 				const tbl = await postData({ action: 'getTable', 'playerId': window.playerId });
+
+				// store previous table cards
+				window.lastTableCards = [];
+				window.table.forEach( grp => {
+					window.lastTableCards = grp.cards.concat(window.lastTableCards);
+				});
+
 				window.table = [];
 				tbl.forEach( grp => {
 					let set = {};
@@ -300,7 +314,7 @@
 				console.dir('err', err);
 			}
 			if (render) {
-				renderCardGroups(window.table, window.guiTable, window.canModifyTable);
+				renderCardGroups(window.table, window.guiTable, window.lastTableCards, window.canModifyTable);
 			}
 		}
 
@@ -311,7 +325,7 @@
 			window.actives = [];
 			window.sets = [];
 			createEmptySet();
-			renderCardGroups(window.sets, window.guiNewSets);
+			renderCardGroups(window.sets, window.guiNewSets, []);
 		}
 
 		async function validateGroup(group) {
@@ -389,11 +403,11 @@
 			set.cards = [];
 			console.dir(set);
 			window.sets.push(set);
-			renderCardGroups(window.sets, window.guiNewSets);
+			renderCardGroups(window.sets, window.guiNewSets, []);
 		}
 
-		function renderCardGroups(groups, gui, enableEvents = true) {
-			console.log('method: renderCardGroups', groups);
+		function renderCardGroups(groups, gui, previousIds, enableEvents = true) {
+			console.log('method: renderCardGroups', JSON.stringify(groups, null, 2), 'previousIds', JSON.stringify(previousIds, null, 2));
 			gui.innerHTML = '';
 			for(const s in groups) {
 				console.log('rendering group_id', groups[s].id);
@@ -403,6 +417,11 @@
 					const card = renderCard(c);
 					if (enableEvents) {
 						card.addEventListener('click', (e) => activateCard(c), true);
+					}
+					// mark cards new from previous known state
+					if (previousIds.indexOf(c) == -1) {
+						card.classList.add('changed');
+						console.dir('adding changed class to card id', c);
 					}
 					nl.append(card);
 				});
@@ -499,13 +518,13 @@
 			});
 
 			window.actives = [];
-			renderCardGroups(window.sets, window.guiNewSets);
-			renderCardGroups(window.hand, window.guiHand);
-			renderCardGroups(window.table, window.guiTable, window.canModifyTable);
+			renderCardGroups(window.sets, window.guiNewSets, []);
+			renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
+			renderCardGroups(window.table, window.guiTable, window.lastTableCards, window.canModifyTable);
 		}
 
 		function renderCard(id) {
-			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&#10029;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '*'};
+			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;'};
 			let card = el('div', id, `${m[window.allCards[id].value]}<br>&nbsp;&nbsp;${m[window.allCards[id].type]}<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m[window.allCards[id].value]}`);
 			card.classList.add(window.allCards[id].type, window.allCards[id].value);
 			return card;
@@ -554,12 +573,6 @@
 		}
 
 		function showTurnEnd() {
-			document.getElementById("indicator").animate(
-				[
-					{ letterSpacing: '1px', color: '#000' },
-					{ letterSpacing: '5px', color: '#0a0' },
-					{ letterSpacing: '1px', color: '#000' }
-				], 700);
 			document.getElementById("html").animate(
 				[
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' },
@@ -608,12 +621,17 @@
 
 		<hr>
 		vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
-		lepe vyresit konec hry<br>
+		lepe vyresit konec hry, omezit statusy?<br>
 		ukazat jinak nove/pridane karty<br>
-		3 sloupce a lepsi layout stranky, top tlacitka plovouci<br>
 		lepsi podbarveni aktivni karty<br>
 		umoznit na konci jeste dolozit sve karty<br>
 		nepreblikavat 2x provedenou zmenu (zkusit)<br>
+		optimalizovat pres cas souboru caste deserializace<br>
+		jiny joker s obrazkem a celkove asi vetsi obrazky<br>
+		draggable hot buttons s konfigurovatelnymi sloupci?<br>
+		otocit logiku pridavani karet zleva (nebo konfigurovatelne?)<br>
+		zjednodusit statusy uzivatelu a hry<br>
+
 	</div>
 
 </div>

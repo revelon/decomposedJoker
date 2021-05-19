@@ -197,6 +197,19 @@ class Game {
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),
 
+			new Card(0, Card::WILD),  // boost some extra jokers, for more fun, remove later !!!
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0, Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0, Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+
 			new Card(1, Card::SPADES),
 			new Card(2, Card::SPADES),
 			new Card(3, Card::SPADES),
