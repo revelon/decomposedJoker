@@ -22,7 +22,7 @@
 		div#guiTable {column-count: 3;}
 		div#guiNewSets {column-count: 2;}
 		div#actions {font-size: 1.6em; position: fixed; left: 74%; top: 80%;}
-		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px;}
+		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1em; border-radius: 6px; margin: 0 0 0 2px; font-family: serif;}
 		button.big {font-size: 2.2em;}
 		div div.changed {border: 2px dotted Red !important;}
@@ -153,13 +153,20 @@
 				window.localStorage.setItem('playerName', name);
 			}
 			try {
-				if (window.playerId = await postData({ action: 'registerPlayer', 'name': name })) {
-					console.dir('registerPlayer', window.playerId);
+				const plr = await postData({ action: 'registerPlayer', 'name': name });
+				if (plr.playerId) {
+					window.playerId = plr.playerId;
+					window.hand[0].cards = plr.hand;
+					console.dir('registerPlayer', plr);
 					document.getElementById('guiRegPlayer').removeAttribute('disabled');
 					let nm = el('span', null, ' &nbsp; &nbsp; &nbsp; (Player: ' + name + ')');
 					document.getElementById('indicator').append(nm);
 					document.getElementById('guiRegPlayer').setAttribute('disabled', true);
 					document.getElementById('guiGameStart').removeAttribute('disabled');
+					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
+
+					//let evt = guiNewSets.addEventListener('click', (e) => { createEmptySet(e); } );
+					console.log('event listener set to create empty set', guiNewSets, evt);
 				}
 			} catch (err) {
 				console.dir('err', err);
@@ -201,6 +208,7 @@
 					window.myTurn = p.amIActivePlayer;
 					window.lastModifiedAt = p.lastModifiedAt;
 					console.dir('players and gameStatus', window.players, window.gameStatus);
+					showTurnEnd();
 					if (render) {
 						renderGameInfo(change);
 					}
@@ -271,7 +279,7 @@
 			if (render) {
 				await getHand(true);
 			}
-			showTurnEnd();
+			//showTurnEnd();
 		}
 
 		async function getTable(render = false) {
@@ -336,7 +344,7 @@
 			}
 			// try to be user friendly and validate active cards as new set
 			if (window.actives.length > 2 && window.sets.length == 1 && window.sets[0].cards.length == 0) {
-				addActiveCardsToSet(window.sets[0].id);
+				addActiveCardsToSet(null, window.sets[0].id);
 			}
 
 			try {
@@ -368,7 +376,7 @@
 				console.dir('doTableChange ended as', turn);
 				// do all loading and rendering, table etc.... !!!!
 				await getServerState();
-				showTurnEnd();
+				//showTurnEnd();
 				window.canModifyTable = true;
 				if (turn == "won") {
 					await getGameInfo(true);
@@ -386,8 +394,11 @@
 
 		// non server interactive functions
 
-		function createEmptySet() {
+		function createEmptySet(e = null) {
 			console.log('method: createEmptySet');
+			if (e) {
+				e.stopPropagation();
+			}
 			let set = {};
 			set.id = "s" + Math.random().toString(12).substring(2, 8);
 			set.cards = [];
@@ -406,7 +417,7 @@
 				groups[s].cards.forEach( c => { // add cards
 					const card = renderCard(c);
 					if (enableEvents) {
-						card.addEventListener('click', (e) => activateCard(c), true);
+						card.addEventListener('click', (e) => activateCard(e, c), true);
 					}
 					// mark cards new from two previous known states
 					if (previousIds.a.indexOf(c) == -1 || previousIds.b.indexOf(c) == -1) {
@@ -419,13 +430,13 @@
 				if (enableEvents) {
 					if (groups[s].id != 0 && groups[s].cards.length) { // not for hand
 						const butt0 = el('button', "act0-" + groups[s].id, ' + ');
-						butt0.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id, true), true);
+						butt0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
 						nl.prepend(butt0);
 					}
 
 					if (groups[s].id !== 0) { // not for hand
 						const butt = el('button', "act-" + groups[s].id, ' + ');
-						butt.addEventListener('click', (e) => addActiveCardsToSet(groups[s].id), true);
+						butt.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
 						if (!groups[s].cards.length) {
 							butt.classList.add('big');	
 						}						
@@ -437,8 +448,11 @@
 			}
 		}
 
-		function addActiveCardsToSet(setId, toTheStart = false) {
+		function addActiveCardsToSet(e, setId, toTheStart = false) {
 			console.log('method: addActiveCardsToSet', setId, toTheStart, window.actives, JSON.stringify(window.sets, null, 2), JSON.stringify(window.table, null, 2));
+			if (e) {
+				e.stopPropagation();
+			}
 			if (!window.gameStatus == 'playing' || !window.myTurn) {
 				return false;
 			}
@@ -540,7 +554,8 @@
 			}
 		}
 
-		function activateCard(id) {
+		function activateCard(e, id) {
+			e.stopPropagation();
 			if (!window.gameStatus == 'playing' || !window.myTurn) {
 				return;
 			}			
@@ -661,7 +676,12 @@
 				konfigurovatelne pocty sloupcu<br>
 				otocit logiku pridavani karet zleva (nebo konfigurovatelne?)<br>
 				zjednodusit statusy uzivatelu a hry?<br>
-				pridat podporu vice paralelnich her
+				pridat podporu vice paralelnich her<br>
+				4 z druhu jdou rozebrat i kdyz neni nahrada za jokera<br>
+				probliknout po tahu<br>
+				vymena karty na prave tlacitko napr. kus? ale ruka je problem... mozna vracet do ruky?<br>
+				zkusit drzet ID sestav persistentne<br>
+				zacit s kartama rovnou
 			</details>
 		</div>
 	</div>

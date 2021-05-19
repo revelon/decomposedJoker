@@ -20,7 +20,13 @@ switch ($data->action) {
 		break;
 	case "getGameCards":
 		$play = Game::load(Game::FILENAME);
-		echo json_encode( [ 'data' => $play->getDeck()->getCards(), 'dbg' => ob_get_clean() ] );
+		if ($play->status === 'inactive') {
+			$givenCards = $play->getCardsInPlayersHands();
+			echo json_encode( [ 'data' => array_merge($givenCards, $play->getDeck()->getCards()), 'dbg' => ob_get_clean() ] );
+		} else {
+			http_response_code(403);
+			echo json_encode( [ 'message' => 'Too late, game has been already started', 'dbg' => ob_get_clean() ] ); 
+		}
 		break;
 	case "registerPlayer":
 		$play = Game::load(Game::FILENAME);
@@ -28,7 +34,7 @@ switch ($data->action) {
 			$pid = $play->assignPlayer($data->name);
 			if ($pid) {
 				$play->save();
-				echo json_encode( [ 'data' => $pid, 'dbg' => ob_get_clean() ] );
+				echo json_encode( [ 'data' => [ 'playerId' => $pid , 'hand' => $play->getPlayerCopy($pid)->getHand()->getCardIds() ], 'dbg' => ob_get_clean() ] );
 			} else {
 				http_response_code(403);
 				echo json_encode( [ 'message' => 'Player with similar name is already registered', 'dbg' => ob_get_clean() ] ); 
@@ -41,7 +47,6 @@ switch ($data->action) {
 	case "setActivePlayer": // and start game
 		$play = Game::load(Game::FILENAME);
 		if ($play->getActivePlayerId() === '') {
-			$play->givePlayersFirstHands(); // give each some cards
 			$play->setActivePlayer($data->playerId);
 			$play->status = 'playing';
 			$play->save();

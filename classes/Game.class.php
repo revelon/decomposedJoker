@@ -25,20 +25,23 @@ class Game {
 			}
 		}
 		$p = new Player(trim($name));
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
 		$this->players[$p->getId()] = $p;
 		dbg("player set", $p);
 		return $p->getId();
 	}
 
-	public function givePlayersFirstHands() : void {
+	public function getCardsInPlayersHands() : array {
+		$ret = [];
 		foreach ($this->players as $p) {
-			$p->addCardToHand($this->deck->popCard());
-			$p->addCardToHand($this->deck->popCard());
-			$p->addCardToHand($this->deck->popCard());
-			$p->addCardToHand($this->deck->popCard());
-			$p->addCardToHand($this->deck->popCard());
+			$ret = array_merge($ret, $p->getHand()->getCards());
 		}
-		dbg("players have their cards", $this->players);
+		dbg("players have these cards already", $ret);
+		return $ret;
 	}
 
 	public function getCurrentTableCopy() : Table {
