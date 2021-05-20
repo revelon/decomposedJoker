@@ -6,13 +6,13 @@ class Group extends Cards {
 	private function __construct() {
 	}
 
-	public static function createSet(Cards $newSet) {
+	public static function createSet(Cards $newSet) : ? self {
 		if (self::validate($newSet)) {
 			$set = new Group();
-			$set->rows = $newSet->rows;
+			$set->rows = $newSet->getCards();
 			return $set;
 		} else {
-			return false;
+			return null;
 		}
 	}
 

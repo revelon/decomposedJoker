@@ -107,12 +107,24 @@ switch ($data->action) {
 			$hand->pushCard(new Card($c->value, $c->type, $c->id));
 		}
 		$table = new Table();
+		$problem = false;
 		foreach ($data->table as $grp) {
 			$newSet = new Cards();
 			foreach ($grp as $c) {
 				$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 			}
-			$table[] = Group::createSet($newSet);
+			var_dump('new set to validate', $newSet);
+			$g = Group::createSet($newSet);
+			if ($g) {
+				$table[] = $g;
+			} else {
+				$problem = true;
+			}
+		}
+		if ($problem) {
+			http_response_code(403);
+			echo json_encode( [ 'message' => 'Some table set is invalid', 'dbg' => ob_get_clean() ] );
+			break;
 		}
 		$play = new Game();
 		$play = Game::load(Game::FILENAME);

@@ -8,6 +8,7 @@
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
 		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div#guiNewSets > div, div#guiTable > div {min-width: 128px; height: 78px; border: 1px dotted Gray; background-image: url(space.svg); background-repeat: repeat-x; display: inline-block; clear: left;}
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px 2px; background-color: rgba(160,255,0,0.5); }
 		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black;}
 		div.spades {background-color: White; color: Black;} 
@@ -19,7 +20,7 @@
 		div > p:nth-of-type(1) {text-align: left;}
 		div > p:nth-of-type(2) {text-align: center;}
 		div > p:nth-of-type(3) {text-align: right;}
-		div#guiTable {column-count: 3;}
+		div#guiTable {column-count: 3; min-height: 100px;}
 		div#guiNewSets {column-count: 2;}
 		div#actions {font-size: 1.6em; position: fixed; left: 74%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px;}
@@ -40,31 +41,6 @@
 	</style>
 	<script>
 		"use strict";
-
-		async function postData(data = {}) {
-			// Default options are marked with *
-			const response = await fetch('api.php', {
-				method: 'POST', // *GET, POST, PUT, DELETE, etc.
-				mode: 'cors', // no-cors, *cors, same-origin
-				cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-				credentials: 'same-origin', // include, *same-origin, omit
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				redirect: 'follow', // manual, *follow, error
-				referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-				body: JSON.stringify(data, null, 2) // body data type must match "Content-Type" header
-			});
-			if (response.status == 304) {
-				throw "Server responded with not-modified status";
-			} 
-			if (response.status > 399) {
-				throw "Server responded error with: " + ret.message;
-			}
-			const ret = await response.json(); // parses JSON response into native JavaScript objects
-			console.dir('server call returned debug:', ret.dbg);
-			return ret.data;
-		}
 
 		var allCards = {}; // all current game cards in the full deck
 		var playerId = ''; // current player secret identifier
@@ -104,6 +80,63 @@
 			dt.ondragstart = mouse2;
 		});
 
+		document.addEventListener('keydown', evalKey);
+
+		async function postData(data = {}) {
+			// Default options are marked with *
+			const response = await fetch('api.php', {
+				method: 'POST', // *GET, POST, PUT, DELETE, etc.
+				mode: 'cors', // no-cors, *cors, same-origin
+				cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+				credentials: 'same-origin', // include, *same-origin, omit
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				redirect: 'follow', // manual, *follow, error
+				referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+				body: JSON.stringify(data, null, 2) // body data type must match "Content-Type" header
+			});
+			if (response.status == 304) {
+				throw "Server responded with not-modified status";
+			} 
+			if (response.status > 399) {
+				throw "Server responded error with: " + ret.message;
+			}
+			const ret = await response.json(); // parses JSON response into native JavaScript objects
+			console.dir('server call returned debug:', ret.dbg);
+			return ret.data;
+		}
+
+		function evalKey(e) {
+  			console.dir('key pressed:', e.code);
+  			if (e.code == 'KeyS') { // try to perform 2 card swap
+  				if (window.gameStatus == 'playing' && window.actives.length == 2 && window.myTurn) {
+  					console.log('trying swap of cards:', window.actives);
+  					let hand = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
+  					let table = [];
+
+					window.hand[0].cards.forEach( (c) => {
+						hand.cards.push( (c == actives[0]) ? actives[1] : (c == actives[1]) ? actives[0] : c );
+					});
+
+					for (let i in window.table) {
+						let grp = {id: window.table[i].id, cards: [], controls: window.table[i].controls};
+						window.table[i].cards.forEach( (c) => {
+							grp.cards.push( (c == actives[0]) ? actives[1] : (c == actives[1]) ? actives[0] : c );
+						});
+						table.push(grp);
+  					}
+
+					console.dir('swap changes', JSON.stringify(hand, null, 2), JSON.stringify(window.hand, null, 2), JSON.stringify(table, null, 2), JSON.stringify(window.table, null, 2));
+					window.hand[0] = hand;
+					window.table = table;
+					window.actives = [];
+					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
+					renderCardGroups(window.table, window.guiTable, window.lastTableCards);
+  				}
+  			}
+		}
+
 		async function initGame() {
 			console.log('method: initGame');
 			try {
@@ -133,16 +166,13 @@
 		function initHelper() {
 			console.log('method: initHeper');
 
-			let hand = {};
-			hand.id = 0; // 0 = special setId and is always player's hand
-			hand.cards = [];
+			const hand = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
 			window.hand.push(hand);
 
 			document.getElementById('guiGameInit').setAttribute('disabled', true);
 			document.getElementById('guiGameJoin').setAttribute('disabled', true);
 			document.getElementById('guiRegPlayer').removeAttribute('disabled');
 
-			createEmptySet();
 			startAutoRefresh();
 		}
 
@@ -165,8 +195,7 @@
 					document.getElementById('guiGameStart').removeAttribute('disabled');
 					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 
-					//let evt = guiNewSets.addEventListener('click', (e) => { createEmptySet(e); } );
-					console.log('event listener set to create empty set', guiNewSets, evt);
+					console.log('event listener set to create empty set', guiNewSets);
 				}
 			} catch (err) {
 				console.dir('err', err);
@@ -254,6 +283,7 @@
 				window.lastHandCards.b = [...window.lastHandCards.a];
 				window.lastHandCards.a = [...window.hand[0].cards];
 				window.hand[0].cards = hand;
+				window.hand[0].controls = false;
 				console.dir('getHand', window.hand);
 			} catch (err) {
 				console.dir('err', err);
@@ -301,7 +331,8 @@
 				window.table = [];
 				tbl.forEach( grp => {
 					let set = {};
-					set.id = "s" + Math.random().toString(12).substring(2, 8);
+					set.id = "existing-" + Math.random().toString(12).substring(2, 8);
+					set.controls = window.canModifyTable;
 					set.cards = grp;
 					window.table.push(set);
 				});
@@ -310,7 +341,7 @@
 				console.dir('err', err);
 			}
 			if (render) {
-				renderCardGroups(window.table, window.guiTable, window.lastTableCards, window.canModifyTable);
+				renderCardGroups(window.table, window.guiTable, window.lastTableCards);
 			}
 		}
 
@@ -320,7 +351,6 @@
 			await getTable(true);
 			window.actives = [];
 			window.sets = [];
-			createEmptySet();
 			renderCardGroups(window.sets, window.guiNewSets, {a: [], b: []});
 		}
 
@@ -343,8 +373,10 @@
 				return;
 			}
 			// try to be user friendly and validate active cards as new set
-			if (window.actives.length > 2 && window.sets.length == 1 && window.sets[0].cards.length == 0) {
-				addActiveCardsToSet(null, window.sets[0].id);
+			// needs more robust logic in the future !!!!!!
+			if (window.actives.length > 2) {
+				const tmp = createEmptySet();
+				addActiveCardsToSet(null, tmp.id);
 			}
 
 			try {
@@ -395,19 +427,23 @@
 		// non server interactive functions
 
 		function createEmptySet(e = null) {
-			console.log('method: createEmptySet');
 			if (e) {
 				e.stopPropagation();
 			}
+			if (window.gameStatus != 'playing') {
+				return;
+			}
+			console.log('method: createEmptySet');
 			let set = {};
-			set.id = "s" + Math.random().toString(12).substring(2, 8);
+			set.id = "new-" + Math.random().toString(12).substring(2, 8);
+			set.controls = true;
 			set.cards = [];
-			console.dir(set);
-			window.sets.push(set);
-			renderCardGroups(window.sets, window.guiNewSets, {a: [], b: []});
+			window.table.push(set);
+			renderCardGroups(window.table, window.guiTable, window.lastTableCards);
+			return set;
 		}
 
-		function renderCardGroups(groups, gui, previousIds, enableEvents = true) {
+		function renderCardGroups(groups, gui, previousIds) {
 			console.log('method: renderCardGroups', JSON.stringify(groups, null, 2), 'previousIds', JSON.stringify(previousIds, null, 2));
 			gui.innerHTML = '';
 			for(const s in groups) {
@@ -416,7 +452,7 @@
 
 				groups[s].cards.forEach( c => { // add cards
 					const card = renderCard(c);
-					if (enableEvents) {
+					if (window.gameStatus == 'playing') {
 						card.addEventListener('click', (e) => activateCard(e, c), true);
 					}
 					// mark cards new from two previous known states
@@ -427,20 +463,17 @@
 					nl.append(card);
 				});
 
-				if (enableEvents) {
-					if (groups[s].id != 0 && groups[s].cards.length) { // not for hand
-						const butt0 = el('button', "act0-" + groups[s].id, ' + ');
+				if (groups[s].controls && groups[s].id != 0) { // not for hand
+ 					if (groups[s].cards.length) {
+						const butt0 = el('button', "act0-" + groups[s].id, ' < ');
 						butt0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
 						nl.prepend(butt0);
-					}
 
-					if (groups[s].id !== 0) { // not for hand
-						const butt = el('button', "act-" + groups[s].id, ' + ');
+						const butt = el('button', "act-" + groups[s].id, ' > ');
 						butt.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
-						if (!groups[s].cards.length) {
-							butt.classList.add('big');	
-						}						
 						nl.append(butt);
+					} else {
+						nl.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
 					}
 				}
 
@@ -548,7 +581,6 @@
 				if (window.gameStatus == 'playing') {
 					document.getElementById('guiGameStart').setAttribute('disabled', true);
 					document.getElementById('guiUndoRefresh').removeAttribute('disabled');
-					document.getElementById('guiEmptySet').removeAttribute('disabled');
 				}
 				getServerState();
 			}
@@ -660,11 +692,11 @@
 		</div>
 
 		<div class="box d">
-			<h6>NewSets</h6> <button onclick='createEmptySet()' id='guiEmptySet' disabled title="Create Empty Set">+</button>
+			<h6>NewSets</h6>
 			<div id='guiNewSets'></div>
 		</div>
 
-		<div class="box e">
+		<div class="box e" onclick='createEmptySet()'>
 			<h6>Table</h6>
 			<div id='guiTable'></div>
 			<br>
@@ -679,9 +711,10 @@
 				pridat podporu vice paralelnich her<br>
 				4 z druhu jdou rozebrat i kdyz neni nahrada za jokera<br>
 				probliknout po tahu<br>
-				vymena karty na prave tlacitko napr. kus? ale ruka je problem... mozna vracet do ruky?<br>
+				vymena karty na prave tlacitko, ikonu nebo s klavesou, ani ruka by nemusela byt problem...<br>
 				zkusit drzet ID sestav persistentne<br>
-				zacit s kartama rovnou
+				click kamkoliv na stul zalozi novou sestavu, ktera bude mit min. delku na 3 karty s pozadim !!<br>
+				vubec neposilat na validaci sestavy kratsi 3 karet
 			</details>
 		</div>
 	</div>
