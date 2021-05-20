@@ -8,9 +8,9 @@
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
 		div#guiHand div div div, div#guiTable div div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding: 2px; font-size: 1.4em; vertical-align: middle;}
-		div#guiTable > div > div {min-width: 132px; height: 78px; border: 1px dotted Gray; background-image: url(space.svg); background-repeat: repeat-x; display: inline-block; margin: 2px auto; vertical-align: top;}
+		div#guiTable > div > div {min-width: 132px; background-image: url(space.svg); background-repeat: repeat-x; display: inline-block; margin: 2px auto; vertical-align: top;}
 		div#guiTable > div > div.withCards {min-width: auto; background: none;}
-		div#guiTable div img {width: 44px; height: 77px; display: inline-block; vertical-align: top; padding: 2px; border: 1px solid transparent; margin-right: 0;}
+		div#guiTable div img {width: 44px; height: 76px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0;}
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px;}
 		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black;}
 		div.spades {background-color: White; color: Black;} 
@@ -22,10 +22,10 @@
 		div > p:nth-of-type(1) {text-align: left;}
 		div > p:nth-of-type(2) {text-align: center;}
 		div > p:nth-of-type(3) {text-align: right;}
-		h1 {text-align: center; margin: 1px; padding: 1px;}
+		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 1.8em;}
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
 		h3 {text-align: center; color: Pink;}
-		div#guiTable {column-count: 1; min-height: 100px;}
+		div#guiTable {column-count: 2;}
 		div.menu button {width: 100%; padding: 4px;}
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px;}
@@ -34,12 +34,12 @@
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -4px 0 0 -2px;}
 		/* main layout */
-		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(4, [col] 24.9% ); grid-template-rows: repeat(3, [row] auto ); width: 100vw; height: 100vh;}
+		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(4, [row] auto ); width: 100vw; height: 100vh;}
 		.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
 		.menu {grid-column: col; grid-row: row / span 2;}
-		.players {grid-column: col; grid-row: row 3;}
-		.hand {grid-column: col 2 / span 3; grid-row: row;}
-		.table {grid-column: col 2 / span 3; grid-row: row 2 / span 2;}
+		.players {grid-column: col; grid-row: row 3 / span 2;}
+		.hand {grid-column: col 2 / span 4; grid-row: row;}
+		.table {grid-column: col 2 / span 4; grid-row: row 2 / span 3;}
 
 	</style>
 	<script>
@@ -721,4 +721,7 @@ pridat podporu vice paralelnich her
 vymena karty na prave tlacitko, ikonu nebo s klavesou, ani ruka by nemusela byt problem...
 zkusit drzet ID sestav persistentne
 vubec neposilat na validaci sestavy kratsi 3 karet
+zrusit oramovani sestavy a upravit zobrazeni i prazdnych
+zuzit levy sloupec
+joker v ruce hlaska na GUI, mozna i jine
 -->
