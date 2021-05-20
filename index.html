@@ -7,9 +7,11 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiNewSets div div, div#guiTable div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding: 2px; font-size: 1.4em; vertical-align: middle;}
-		div#guiNewSets > div, div#guiTable > div {min-width: 128px; height: 78px; border: 1px dotted Gray; background-image: url(space.svg); background-repeat: repeat-x; display: inline-block; clear: left;}
-		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px 2px; background-color: rgba(160,255,0,0.5); }
+		div#guiHand div div div, div#guiTable div div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div#guiTable > div > div {min-width: 132px; height: 78px; border: 1px dotted Gray; background-image: url(space.svg); background-repeat: repeat-x; display: inline-block; margin: 2px auto; vertical-align: top;}
+		div#guiTable > div > div.withCards {min-width: auto; background: none;}
+		div#guiTable div img {width: 44px; height: 77px; display: inline-block; vertical-align: top; padding: 2px; border: 1px solid transparent; margin-right: 0;}
+		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px;}
 		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black;}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
@@ -20,23 +22,24 @@
 		div > p:nth-of-type(1) {text-align: left;}
 		div > p:nth-of-type(2) {text-align: center;}
 		div > p:nth-of-type(3) {text-align: right;}
-		div#guiTable {column-count: 3; min-height: 100px;}
-		div#guiNewSets {column-count: 2;}
-		div#actions {font-size: 1.6em; position: fixed; left: 74%; top: 80%;}
+		h1 {text-align: center; margin: 1px; padding: 1px;}
+		div.menu img {width: 128px; margin: 0px auto; display: block;}
+		h3 {text-align: center; color: Pink;}
+		div#guiTable {column-count: 1; min-height: 100px;}
+		div.menu button {width: 100%; padding: 4px;}
+		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px;}
-		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1em; border-radius: 6px; margin: 0 0 0 2px; font-family: serif;}
-		button.big {font-size: 2.2em;}
+		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
 		div div.changed {border: 2px dotted Red !important;}
-		span#dragTarget {cursor: move; color: black;}
-		h6 {font-style: italic; font-size: 1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -18px 0 0 -2px;}
+		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
+		h6 {font-style: italic; font-size: 1.1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -4px 0 0 -2px;}
 		/* main layout */
-		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(4, [col] 24.9% ); grid-template-rows: repeat(3, [row] auto );}
+		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(4, [col] 24.9% ); grid-template-rows: repeat(3, [row] auto ); width: 100vw; height: 100vh;}
 		.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
-		.a {grid-column: col / span 3; grid-row: row;}
-		.b {grid-column: col 4; grid-row: row;}
-		.c {grid-column: col / span 2; grid-row: row 2;}
-		.d {grid-column: col 3 / span 2; grid-row: row 2;}
-		.e {grid-column: col / span 4; grid-row: row 3;}
+		.menu {grid-column: col; grid-row: row / span 2;}
+		.players {grid-column: col; grid-row: row 3;}
+		.hand {grid-column: col 2 / span 3; grid-row: row;}
+		.table {grid-column: col 2 / span 3; grid-row: row 2 / span 2;}
 
 	</style>
 	<script>
@@ -57,7 +60,6 @@
 		var tick; // holder for refresing/ticking setInterval object
 		var lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
 		var guiHand;
-		var guiNewSets;
 		var guiTable;
 		var guiPlayers;
 		var guiActions;
@@ -67,8 +69,6 @@
 
 			window.guiHand = document.getElementById('guiHand');
 			window.guiHand.innerHTML = '';
-			window.guiNewSets = document.getElementById('guiNewSets');
-			window.guiNewSets.innerHTML = '';			
 			window.guiTable = document.getElementById('guiTable');
 			window.guiTable.innerHTML = '';
 			window.guiPlayers = document.getElementById('guiPlayers');
@@ -98,11 +98,11 @@
 			});
 			if (response.status == 304) {
 				throw "Server responded with not-modified status";
-			} 
+			}
+			const ret = await response.json(); // parses JSON response into native JavaScript objects
 			if (response.status > 399) {
 				throw "Server responded error with: " + ret.message;
 			}
-			const ret = await response.json(); // parses JSON response into native JavaScript objects
 			console.dir('server call returned debug:', ret.dbg);
 			return ret.data;
 		}
@@ -189,13 +189,10 @@
 					window.hand[0].cards = plr.hand;
 					console.dir('registerPlayer', plr);
 					document.getElementById('guiRegPlayer').removeAttribute('disabled');
-					let nm = el('span', null, ' &nbsp; &nbsp; &nbsp; (Player: ' + name + ')');
-					document.getElementById('indicator').append(nm);
+					document.getElementById('indicator').innerText = 'Player: '+ name;
 					document.getElementById('guiRegPlayer').setAttribute('disabled', true);
 					document.getElementById('guiGameStart').removeAttribute('disabled');
 					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
-
-					console.log('event listener set to create empty set', guiNewSets);
 				}
 			} catch (err) {
 				console.dir('err', err);
@@ -351,7 +348,6 @@
 			await getTable(true);
 			window.actives = [];
 			window.sets = [];
-			renderCardGroups(window.sets, window.guiNewSets, {a: [], b: []});
 		}
 
 		async function validateGroup(group) {
@@ -430,7 +426,7 @@
 			if (e) {
 				e.stopPropagation();
 			}
-			if (window.gameStatus != 'playing') {
+			if (window.gameStatus != 'playing' || !window.myTurn) {
 				return;
 			}
 			console.log('method: createEmptySet');
@@ -439,6 +435,9 @@
 			set.controls = true;
 			set.cards = [];
 			window.table.push(set);
+			if (window.actives.length) { // be pro-active and push cards there as well
+				addActiveCardsToSet(null, set.id);
+			}
 			renderCardGroups(window.table, window.guiTable, window.lastTableCards);
 			return set;
 		}
@@ -449,6 +448,11 @@
 			for(const s in groups) {
 				console.log('rendering group_id', groups[s].id);
 				const nl = el('div', groups[s].id);
+				const sub = el('div');
+				if (groups[s].cards.length) {
+					sub.classList.add('withCards');
+				}
+				nl.append(sub);
 
 				groups[s].cards.forEach( c => { // add cards
 					const card = renderCard(c);
@@ -460,17 +464,23 @@
 						card.classList.add('changed');
 						console.dir('adding changed class to card id', c);
 					}
-					nl.append(card);
+					sub.append(card);
 				});
 
-				if (groups[s].controls && groups[s].id != 0) { // not for hand
+				if (groups[s].id != 0) { // not for hand
  					if (groups[s].cards.length) {
-						const butt0 = el('button', "act0-" + groups[s].id, ' < ');
-						butt0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
+						const butt0 = el('img', "act0-" + groups[s].id);
+						butt0.src = 'space.svg';
+						if (groups[s].controls) {
+							butt0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
+						}
 						nl.prepend(butt0);
 
-						const butt = el('button', "act-" + groups[s].id, ' > ');
-						butt.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
+						const butt = el('img', "act-" + groups[s].id);
+						butt.src = 'space.svg';
+						if (groups[s].controls) {
+							butt.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
+						}
 						nl.append(butt);
 					} else {
 						nl.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
@@ -556,7 +566,6 @@
 			});
 
 			window.actives = [];
-			renderCardGroups(window.sets, window.guiNewSets, {a: [], b: []});
 			renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 			renderCardGroups(window.table, window.guiTable, window.lastTableCards, window.canModifyTable);
 		}
@@ -665,59 +674,51 @@
 <body>
 
 	<div id="actions">
-		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>Get Card</button> &nbsp; &nbsp; <span id='dragTarget'>&#9851;</span><br>
-		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>Validate Changes</button>
+		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>&#10132; Get Card</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
+		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>&#10148; Validate Changes</button>
 	</div>
 
 	<div class="wrapper">
-		<div class="box a">
-			<img src="joker.svg" width="128" style="float: left">
-			<h1 id="indicator">Decomposed Joker</h1>
+		<div class="box menu">
+			<img src="joker.svg">
+			<h1>Decomposed Joker</h1>
 
-			<button onclick='initGame()' id='guiGameInit'>Init Game</button>
-			<button onclick='joinGame()' id='guiGameJoin'>Join Game</button>
-			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>Register Player</button>
-			<button onclick='startGame()' id='guiGameStart' disabled>Start Game</button>
-			<button onclick='getServerState()' id='guiUndoRefresh' disabled>Refresh (Undo)</button>
+			<button onclick='initGame()' id='guiGameInit'>&#9863; Init Game</button>
+			<button onclick='joinGame()' id='guiGameJoin'>&#9865; Join Game</button>
+			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>&#8858; Register Player</button>
+			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Start Game</button>
+			<button onclick='getServerState()' id='guiUndoRefresh' disabled>&#8634; Refresh (Undo)</button>
+			<hr>
+			<h3 id="indicator"></h3>
 		</div>
 
-		<div class="box b">
+		<div class="box players">
 			<h6>Players</h6>
 			<div id='guiPlayers'></div>
 		</div>
 
-		<div class="box c">
+		<div class="box hand">
 			<h6>Hand</h6>
 			<div id='guiHand'></div>
 		</div>
 
-		<div class="box d">
-			<h6>NewSets</h6>
-			<div id='guiNewSets'></div>
-		</div>
-
-		<div class="box e" onclick='createEmptySet()'>
+		<div class="box table" onclick='createEmptySet()'>
 			<h6>Table</h6>
 			<div id='guiTable'></div>
-			<br>
-			<details>
-				vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)<br>
-				lepe vyresit konec hry, omezit statusy?<br>
-				umoznit na konci jeste dolozit sve karty<br>
-				nepreblikavat 2x provedenou zmenu (zkusit)<br>
-				konfigurovatelne pocty sloupcu<br>
-				otocit logiku pridavani karet zleva (nebo konfigurovatelne?)<br>
-				zjednodusit statusy uzivatelu a hry?<br>
-				pridat podporu vice paralelnich her<br>
-				4 z druhu jdou rozebrat i kdyz neni nahrada za jokera<br>
-				probliknout po tahu<br>
-				vymena karty na prave tlacitko, ikonu nebo s klavesou, ani ruka by nemusela byt problem...<br>
-				zkusit drzet ID sestav persistentne<br>
-				click kamkoliv na stul zalozi novou sestavu, ktera bude mit min. delku na 3 karty s pozadim !!<br>
-				vubec neposilat na validaci sestavy kratsi 3 karet
-			</details>
 		</div>
 	</div>
 
 </body>
 </html>
+
+<!--
+vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)
+lepe vyresit konec hry, omezit statusy?
+umoznit na konci jeste dolozit sve karty
+nepreblikavat 2x provedenou zmenu (zkusit)
+pridat podporu vice paralelnich her
+4 z druhu jdou rozebrat i kdyz neni nahrada za jokera
+vymena karty na prave tlacitko, ikonu nebo s klavesou, ani ruka by nemusela byt problem...
+zkusit drzet ID sestav persistentne
+vubec neposilat na validaci sestavy kratsi 3 karet
+-->
