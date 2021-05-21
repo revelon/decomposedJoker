@@ -22,7 +22,7 @@
 		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
 		div#guiTable div img {width: 44px; height: 76px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0; user-select: none;}
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black;}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black; transform: translateY(-6px);}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
@@ -40,7 +40,7 @@
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
-		div div.changed {border: 2px dotted Red !important;}
+		div div.changed {transform: translateY(6px); filter: drop-shadow(-3px 3px 1px Black);}
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -4px 0 0 -2px;}
 		/* main layout */
@@ -750,6 +750,7 @@
 			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>&#8858; Register Player</button>
 			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Start Game</button>
 			<button onclick='getServerState()' id='guiUndoRefresh' disabled>&#8634; Refresh (Undo)</button>
+			<button onclick='alert("Help\n\nKey A = activate altering sets during introducing my first set\nKey S = swap two selected cards\n....")'>? Help</button>
 			<hr>
 			<h3 id="indicator"></h3>
 		</div>
@@ -780,7 +781,6 @@ umoznit na konci jeste dolozit sve karty
 nepreblikavat 2x provedenou zmenu (zkusit)
 pridat podporu vice paralelnich her
 4 z druhu jdou rozebrat i kdyz neni nahrada za jokera
-vymena karty na prave tlacitko, ikonu nebo s klavesou, ani ruka by nemusela byt problem...
 zkusit drzet ID sestav persistentne
 vubec neposilat na validaci sestavy kratsi 3 karet
 zrusit oramovani sestavy a upravit zobrazeni i prazdnych
