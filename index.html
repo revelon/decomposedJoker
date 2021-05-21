@@ -7,10 +7,20 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div div, div#guiTable div div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; break-inside: avoid; padding: 2px; font-size: 1.4em; vertical-align: middle;}
-		div#guiTable > div > div {min-width: 132px; background-image: url(space.svg); background-repeat: repeat-x; display: inline-block; margin: 2px auto; vertical-align: top;}
-		div#guiTable > div > div.withCards {min-width: auto; background: none;}
-		div#guiTable div img {width: 44px; height: 76px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0;}
+		div#guiHand div div, div#guiTable div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		/* clusmy attempt of dynamic scaling based on number of cards in the set */
+		div#guiTable div.c5 div {margin-left: -4px;}
+		div#guiTable div.c6 div {margin-left: -8px;}
+		div#guiTable div.c7 div {margin-left: -12px;}
+		div#guiTable div.c8 div {margin-left: -15px;}
+		div#guiTable div.c9 div {margin-left: -15px; width: 32px;}
+		div#guiTable div.c10 div {margin-left: -15px; width: 32px;}
+		div#guiTable div.c11 div {margin-left: -18px; width: 32px;}
+		div#guiTable div.c12 div {margin-left: -18px; width: 29px;}
+		div#guiTable div.c13 div {margin-left: -18px; width: 29px;}
+		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
+		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
+		div#guiTable div img {width: 44px; height: 76px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0; user-select: none;}
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px;}
 		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black;}
 		div.spades {background-color: White; color: Black;} 
@@ -108,12 +118,12 @@
 		}
 
 		function evalKey(e) {
-  			console.dir('key pressed:', e.code);
-  			if (e.code == 'KeyS') { // try to perform 2 card swap
-  				if (window.gameStatus == 'playing' && window.actives.length == 2 && window.myTurn) {
-  					console.log('trying swap of cards:', window.actives);
-  					let hand = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
-  					let table = [];
+			console.dir('key pressed:', e.code);
+			if (e.code == 'KeyS') { // try to perform 2 card swap
+				if (window.gameStatus == 'playing' && window.actives.length == 2 && window.myTurn) {
+					console.log('trying swap of cards:', window.actives);
+					let hand = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
+					let table = [];
 
 					window.hand[0].cards.forEach( (c) => {
 						hand.cards.push( (c == actives[0]) ? actives[1] : (c == actives[1]) ? actives[0] : c );
@@ -125,7 +135,7 @@
 							grp.cards.push( (c == actives[0]) ? actives[1] : (c == actives[1]) ? actives[0] : c );
 						});
 						table.push(grp);
-  					}
+					}
 
 					console.dir('swap changes', JSON.stringify(hand, null, 2), JSON.stringify(window.hand, null, 2), JSON.stringify(table, null, 2), JSON.stringify(window.table, null, 2));
 					window.hand[0] = hand;
@@ -133,8 +143,8 @@
 					window.actives = [];
 					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 					renderCardGroups(window.table, window.guiTable, window.lastTableCards);
-  				}
-  			}
+				}
+			}
 		}
 
 		async function initGame() {
@@ -178,7 +188,7 @@
 
 		async function registerPlayer() {
 			console.log('method: registerPlayer', window.localStorage.getItem('playerName'));
-			const name = prompt("Please enter your name", window.localStorage.getItem('playerName'));
+			const name = prompt("Please enter your name", window.localStorage.getItem('playerName') ? window.localStorage.getItem('playerName') : 'PlayerX');
 			if (name != window.localStorage.getItem('playerName')) {
 				window.localStorage.setItem('playerName', name);
 			}
@@ -448,11 +458,7 @@
 			for(const s in groups) {
 				console.log('rendering group_id', groups[s].id);
 				const nl = el('div', groups[s].id);
-				const sub = el('div');
-				if (groups[s].cards.length) {
-					sub.classList.add('withCards');
-				}
-				nl.append(sub);
+				nl.classList.add('c' + groups[s].cards.length);
 
 				groups[s].cards.forEach( c => { // add cards
 					const card = renderCard(c);
@@ -464,8 +470,18 @@
 						card.classList.add('changed');
 						console.dir('adding changed class to card id', c);
 					}
-					sub.append(card);
+					nl.append(card);
 				});
+
+				// solve case of empty set by rendering three cards
+				if (!groups[s].cards.length && groups[s].id != 0) {
+					console.log('rendering set as empty group');
+					for (let a = 0; a < 3; a++) {
+						let crd = el('img');
+						crd.src = 'space.svg';
+						nl.append(crd);
+					}
+				}
 
 				if (groups[s].id != 0) { // not for hand
  					if (groups[s].cards.length) {
@@ -666,7 +682,7 @@
 		}
 
 		var mouse2 = function() {
-  			return false;
+			return false;
 		}
 
 	</script>
