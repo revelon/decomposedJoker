@@ -25,7 +25,7 @@ class Table implements \ArrayAccess, \Iterator, \Countable
     }
 
     public function areAllSetsValid() : bool {
-        var_dump('xxxxxx', $this);
+        //var_dump('xxxxxx', $this);
         foreach ($this->rows as $set) {
             var_dump('areAllSetsValid', $set, Group::validate($set));
             if (!Group::validate($set)) {

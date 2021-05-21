@@ -145,6 +145,10 @@
 					renderCardGroups(window.table, window.guiTable, window.lastTableCards);
 				}
 			}
+			if (e.code == 'KeyA') {
+				console.log('trying activate first set + alter existing ones');
+				firstDynamicUnlock();
+			}
 		}
 
 		async function initGame() {
@@ -244,7 +248,7 @@
 					window.myTurn = p.amIActivePlayer;
 					window.lastModifiedAt = p.lastModifiedAt;
 					console.dir('players and gameStatus', window.players, window.gameStatus);
-					showTurnEnd();
+					showSuccess();
 					if (render) {
 						renderGameInfo(change);
 					}
@@ -316,7 +320,7 @@
 			if (render) {
 				await getHand(true);
 			}
-			//showTurnEnd();
+			//showSuccess();
 		}
 
 		async function getTable(render = false) {
@@ -363,7 +367,9 @@
 		async function validateGroup(group) {
 			console.log('method: validateGroup', group);
 			try {
-				const grp = await postData({ action: 'validateGroup', 'cards': group });
+				let cardSet = [];
+				group.forEach( c => cardSet.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
+				const grp = await postData({ action: 'validateGroup', 'cards': cardSet });
 				console.dir('validateGroup', grp);
 				return grp;
 			} catch (err) {
@@ -414,7 +420,7 @@
 				console.dir('doTableChange ended as', turn);
 				// do all loading and rendering, table etc.... !!!!
 				await getServerState();
-				//showTurnEnd();
+				//showSuccess();
 				window.canModifyTable = true;
 				if (turn == "won") {
 					await getGameInfo(true);
@@ -431,6 +437,34 @@
 
 
 		// non server interactive functions
+
+		// for cases when user wants to introduce new card group + modify existing sets
+		async function firstDynamicUnlock() {
+			console.log('method: firstDynamicUnlock');
+			// user should have at least one new valid set from hand ready
+			if (window.gameStatus == 'playing' && window.hand[0].cards.length < window.lastHandCards.a.length) {
+				for (let i in window.table) {
+					if (window.table[i].id.indexOf('new') == 0 && window.table[i].cards.length) {
+						let valid = await validateGroup(window.table[i].cards);
+						if (valid) {
+							window.canModifyTable = true;
+							break;
+						}
+					}
+				}
+				if (window.canModifyTable) {
+					for (let i in window.table) {
+						window.table[i].controls = true;
+					}
+					renderCardGroups(window.table, window.guiTable, window.lastTableCards);
+				}
+			}
+			if (!window.canModifyTable) {
+				showFailure();
+			} else {
+				showSuccess();
+			}
+		}
 
 		function createEmptySet(e = null) {
 			if (e) {
@@ -462,8 +496,10 @@
 
 				groups[s].cards.forEach( c => { // add cards
 					const card = renderCard(c);
-					if (window.gameStatus == 'playing') {
+					if (window.gameStatus == 'playing' && (groups[s].controls || groups[s].id == 0)) {
 						card.addEventListener('click', (e) => activateCard(e, c), true);
+					} else {
+						card.addEventListener('click', (e) => dummyClick(e), true);
 					}
 					// mark cards new from two previous known states
 					if (previousIds.a.indexOf(c) == -1 || previousIds.b.indexOf(c) == -1) {
@@ -489,6 +525,8 @@
 						butt0.src = 'space.svg';
 						if (groups[s].controls) {
 							butt0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
+						} else {
+							butt0.addEventListener('click', (e) => dummyClick(e), true);
 						}
 						nl.prepend(butt0);
 
@@ -496,6 +534,8 @@
 						butt.src = 'space.svg';
 						if (groups[s].controls) {
 							butt.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
+						} else {
+							butt.addEventListener('click', (e) => dummyClick(e), true);
 						}
 						nl.append(butt);
 					} else {
@@ -612,8 +652,9 @@
 		}
 
 		function activateCard(e, id) {
+			console.dir('method: activateCard', id);
 			e.stopPropagation();
-			if (!window.gameStatus == 'playing' || !window.myTurn) {
+			if (window.gameStatus != 'playing' || !window.myTurn) {
 				return;
 			}			
 			const x = window.actives.indexOf(id);
@@ -635,7 +676,7 @@
 			return el;
 		}
 
-		function showTurnEnd() {
+		function showSuccess() {
 			document.getElementById("html").animate(
 				[
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' },
@@ -651,6 +692,11 @@
 					{ background: 'DarkRed' },
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' }
 				], 1000);
+		}
+
+		function dummyClick(e) {
+			console.dir('method: dummyClick');
+			e.stopPropagation();
 		}
 
 		// several methods related to freagging main actions around screen 
@@ -728,7 +774,7 @@
 </html>
 
 <!--
-vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve)
+vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve); da se podvadet preskladanim do nove groupy !!
 lepe vyresit konec hry, omezit statusy?
 umoznit na konci jeste dolozit sve karty
 nepreblikavat 2x provedenou zmenu (zkusit)
