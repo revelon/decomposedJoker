@@ -8,13 +8,14 @@ class Game {
 	private $table = null;
 	private $activePlayer = '';
 	public $status = 'inactive'; // inactive | playing | finished
+	public $turns = 0;
 
 	function __construct(string $gameId) {
 		$this->id = self::getGameFileName($gameId);
 	}
 
 	public static function getGameFileName(string $gameId) {
-		return 'store/' . md5($gameId);
+		return 'store/' . md5(strtoupper($gameId));
 	}
 
 	public function startNewGame() {
@@ -170,6 +171,7 @@ class Game {
 				}
 			}
 		}
+		$this->turns++;
 		return $this->activePlayer; // solve one player game only case
 	}
 
@@ -185,8 +187,11 @@ class Game {
 		return (bool) $me;
 	}
 
-	public static function load(string $gameId) : Game {
+	public static function load(string $gameId) : ?Game {
 		dbg('loading', $gameId);
+		if (!file_exists(self::getGameFileName($gameId))) {
+			return null;
+		}
 		return unserialize(file_get_contents(self::getGameFileName($gameId)));
 	}
 
@@ -201,6 +206,16 @@ class Game {
 	private function createDeck() : Cards {
 		$deck = new Cards(
 			new Card(0, Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+
+			new Card(0, Card::WILD),  // boost some extra jokers, for more fun, remove later !!!!
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+
+			new Card(0, Card::WILD),  // boost some extra jokers, for more fun, remove later !!!!
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),

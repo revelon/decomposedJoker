@@ -12,27 +12,42 @@ $data = json_decode($json);
 
 switch ($data->action) {
 	case "initGame":
-		if (file_exists(Game::getGameFileName($data->gameId))) {
-			unlink(Game::getGameFileName($data->gameId));
+		$id = '';
+		if ($data->gameId) { // play again case, with existing ID
+			$play = Game::load($data->gameId);
+			var_dump($play->status);
+			if ($play && $play->status === 'finished') {
+				$id = $data->gameId;
+			}
 		}
-		$play = new Game($data->gameId);
+		while ($id === '') {
+			echo " searching for new game id... ";
+			$id = strtoupper(bin2hex(random_bytes(2)));
+			// game exists and is younger than one day
+			if (file_exists(Game::getGameFileName($id)) && 
+					(time() - filemtime(Game::getGameFileName($id) < (60*60*24)))) {
+				$id = ''; // try it again
+			}
+		}
+		$play = new Game($id);
 		$play->startNewGame();
 		$play->save();
-		echo json_encode( [ 'data' => $play->getDeck()->getCards(), 'dbg' => ob_get_clean() ] );
+		usleep(500000); // wait for 0.5s, could be removed
+		echo json_encode( [ 'data' => $id, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getGameCards":
 		$play = Game::load($data->gameId);
-		if ($play->status === 'inactive') {
+		if ($play && $play->status === 'inactive') {
 			$givenCards = $play->getCardsInPlayersHands();
 			echo json_encode( [ 'data' => array_merge($givenCards, $play->getDeck()->getCards()), 'dbg' => ob_get_clean() ] );
 		} else {
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Too late, game has been already started', 'dbg' => ob_get_clean() ] ); 
+			echo json_encode( [ 'message' => 'Too late, game has been already started or was not found', 'dbg' => ob_get_clean() ] ); 
 		}
 		break;
 	case "registerPlayer":
 		$play = Game::load($data->gameId);
-		if ($play->status === 'inactive') {
+		if ($play && $play->status === 'inactive') {
 			$pid = $play->assignPlayer($data->name);
 			if ($pid) {
 				$play->save();
@@ -48,7 +63,7 @@ switch ($data->action) {
 		break;
 	case "setActivePlayer": // and start game
 		$play = Game::load($data->gameId);
-		if ($play->getActivePlayerId() === '') {
+		if ($play && $play->getActivePlayerId() === '') {
 			$play->setActivePlayer($data->playerId);
 			$play->status = 'playing';
 			$play->save();
@@ -64,7 +79,7 @@ switch ($data->action) {
 			$play = Game::load($data->gameId);
 			echo json_encode( [ 'data' => [ 'players' => $play->getPlayersInfo(), 'gameStatus' => $play->status , 
 				'amIActivePlayer' => ($play->getActivePlayerId() && $play->getActivePlayerId() === $data->playerId),
-				'lastModifiedAt' => $changedAt ], 'dbg' => ob_get_clean() ] );
+				'lastModifiedAt' => $changedAt, 'turns' => $play->turns], 'dbg' => ob_get_clean() ] );
 		} else {
 			http_response_code(304);
 		}
@@ -81,7 +96,7 @@ switch ($data->action) {
 		break;
 	case "getCard":
 		$play = Game::load($data->gameId);
-		if ($play->getActivePlayerId() === $data->playerId && $play->doTurnAsGetCard($data->playerId)) {
+		if ($play && $play->getActivePlayerId() === $data->playerId && $play->doTurnAsGetCard($data->playerId)) {
 			//$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 			$play->save();
 			echo json_encode( [ 'data' => true, 'dbg' => ob_get_clean() ] );
@@ -129,7 +144,7 @@ switch ($data->action) {
 			break;
 		}
 		$play = Game::load($data->gameId);
-		if ($play->doTurnAsTableChange($data->playerId, $table, $hand)) {
+		if ($play && $play->doTurnAsTableChange($data->playerId, $table, $hand)) {
 			$play->save(); // won = player won the game
 			echo json_encode( [ 'data' => ($play->status === 'finished') ? 'won' : 'done', 'dbg' => ob_get_clean() ] );
 		} else {
