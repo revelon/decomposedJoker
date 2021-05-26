@@ -79,6 +79,7 @@
 		var guiTable;
 		var guiPlayers;
 		var guiActions;
+		var audioObj = new Audio('cardflip.mp3');
 
 		window.addEventListener('load', (event) => {
 			console.log('method: document loaded...');
@@ -100,7 +101,7 @@
 
 		async function postData(data = {}) {
 			// Default options are marked with *
-			const response = await fetch('api.php', {
+			const response = await fetch('api.php?' + data.action, {
 				method: 'POST', // *GET, POST, PUT, DELETE, etc.
 				mode: 'cors', // no-cors, *cors, same-origin
 				cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -176,7 +177,7 @@
 
 		async function joinGame() {
 			console.log('method: joinGame');
-			const str = window.prompt("Zadej název hry ke které se chcete připojit:", window.gameId ? window.gameId : '');
+			const str = window.prompt("Zadej kód hry, ke které se chcete připojit:", window.gameId ? window.gameId : '');
 			if (!str) {
 				return;
 			}
@@ -256,6 +257,7 @@
 					document.getElementById('guiRegPlayer').setAttribute('disabled', true);
 					document.getElementById('guiGameStart').removeAttribute('disabled');
 					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
+					audioObj.play();
 				}
 			} catch (err) {
 				console.dir('err', err);
@@ -268,7 +270,7 @@
 			try {
 				if (await postData({ action: 'setActivePlayer', 'gameId': window.gameId, 'playerId': window.playerId })) {
 					console.dir('startGame', true);
-					await getHand(true);
+					//await getHand(true);
 					window.gameStatus = 'playing';
 					document.getElementById('guiGameStart').setAttribute('disabled', true);
 					document.getElementById('guiTurnGetCard').removeAttribute('disabled');
@@ -323,7 +325,7 @@
 					return;
 				}
 				if (!window.tick) {
-					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1000);
+					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1500);
 				} else {
 					//window.clearInterval(window.tick);
 				}
@@ -364,6 +366,7 @@
 			 		// player really wants to abandon current changes
 					console.log('player wants to really get new card, doing hand reset');
 					window.hand[0].cards = window.lastHandCards.a;
+					audioObj.play();
 			 	} else {
 			 		console.log('player does not want to take new card');
 			 		return; // no, it is a mistake
@@ -423,6 +426,7 @@
 			await getTable(true);
 			window.actives = [];
 			window.sets = [];
+			audioObj.play();
 		}
 
 		async function validateGroup(group) {
@@ -488,6 +492,7 @@
 					finishHelper();
 				} else {
 					window.myTurn = false;
+					audioObj.play();
 				}
 			} catch (err) {
 				console.dir('err', err);
@@ -563,7 +568,7 @@
 						card.addEventListener('click', (e) => dummyClick(e), true);
 					}
 					// mark cards new from two previous known states, but not new sets
-					if (!groups[s].new && (previousIds.a.indexOf(c) === -1 || previousIds.b.indexOf(c) === -1)) {
+					if (!groups[s].new && (previousIds.a.includes(c) || previousIds.b.includes(c))) {
 						card.classList.add('changed');
 						console.dir('adding changed class to card id', c);
 					}
@@ -621,15 +626,13 @@
 			try {
 				window.actives.forEach( a => {
 					window.table.forEach( (grp, idx) => {
-						const x = grp.cards.indexOf(a);
-						if ((x > -1) && (setId == grp.id)) {
+						if (grp.cards.includes(a) && (setId == grp.id)) {
 							console.dir('invalid!!!');
 							throw "Invalid card : set combination";
 						}
 					});
 					window.sets.forEach( (grp, idx) => {
-						const x = grp.cards.indexOf(a);
-						if ((x > -1) && (setId == grp.id)) {
+						if (grp.cards.includes(a) && (setId == grp.id)) {
 							console.dir('invalid!!!');
 							throw "Invalid card : set combination";
 						}
@@ -847,11 +850,11 @@
 		<button onclick='document.getElementById("help").classList.toggle("visible")'>X</button>
 		<h2>Nápověda</h2>
 		<ul>
-			<li>První hráč musí hru <b>založit</b> a další hráči se pak mohou ke stejně pojmenované hře <b>připojit</b>.</li>
+			<li>První hráč musí hru <b>založit</b> a další hráči se pak mohou ke hře <b>připojit</b>.</li> Pro to je třeba zadat <b>stejný kód hry</b>, zobrazený v levém sloupci, který musí zahajující hráč ostatním hráčům <b>předat</b>.</li>
 			<li>Pro hru je potřeba se jako hráč <b>registrovat</b> pod zvoleným jménem.</li>
 			<li>Jakmile je hra založena a registrován alespoň jeden hráč, je možno hru <b>zahájit</b>.</li>
 			<li>Na tahu je vždy právě jeden hráč (ukazatel vlevo dole) a ostatní hráči nemají v té chvíli možnost provádět žádné akce.</li>
-			<li>Během hry může hráč buď <b>vzít kartu</b> nebo, pokud vyložil některé karty z ruky na stůl, chtít <b>provést změny</b>.</li>
+			<li>Během hry může hráč buď <b>vzít kartu</b> nebo, pokud vyložil některé karty z ruky na stůl, chtít <b>provést změny</b> na stole.</li>
 			<li>Karty pro vytvoření nové sestavy je potřeba <b>označovat ve správném pořadí</b> zleva doprava (pokud se dokládá více karet najednou zleva, tak v opačném pořadí).</li>
 			<li>Nová sestava na stole vznikne vždy při kliknutí na stůl. Jsou-li v tu chvíli již označeny některé karty, rovnou se do ní přidají.</li>
 			<li>Dokládat označené karty k sestavám zleva nebo zprava lze kliknutím na prazdnou pozici vlevo nebo vpravo.</li>
@@ -879,5 +882,9 @@ vubec neposilat na validaci sestavy kratsi 3 karet
 joker v ruce hlaska na GUI, mozna i jine
 bude historie -2 dostatecna i pro hru vice hracu? asi ne, predelat na zasobnik podle poctu hracu + 1
 kontrolovat v API konzistentne a vzdy ze je hra OK
-pridat pocitadlo tahu
+pridat server side logovani chyb
+zahajit hru vzetim karty
+vsechny zmeny, nejen nove karty na stole!!
+translate meni z-index a karty se prekryvaji divne
+nejsou uz window.sets na zruseni ?
 -->

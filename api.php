@@ -32,7 +32,7 @@ switch ($data->action) {
 		$play = new Game($id);
 		$play->startNewGame();
 		$play->save();
-		usleep(500000); // wait for 0.5s, could be removed
+		//usleep(500000); // wait for 0.5s, could be removed
 		echo json_encode( [ 'data' => $id, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getGameCards":
