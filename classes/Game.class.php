@@ -1,15 +1,20 @@
 <?php
 
 class Game {
+	private $id = 'store/';
 	private $players = [];
 	private $allCardIds = [];	
 	private $deck = null;
 	private $table = null;
 	private $activePlayer = '';
 	public $status = 'inactive'; // inactive | playing | finished
-	const FILENAME = 'store/aaaaaa.data';
 
-	function __construct() {
+	function __construct(string $gameId) {
+		$this->id = self::getGameFileName($gameId);
+	}
+
+	public static function getGameFileName(string $gameId) {
+		return 'store/' . md5($gameId);
 	}
 
 	public function startNewGame() {
@@ -175,14 +180,14 @@ class Game {
 	}
 
 	public function save() : bool {
-		$me = file_put_contents(self::FILENAME, serialize($this));
+		$me = file_put_contents($this->id, serialize($this));
 		dbg('saving', $me);
 		return (bool) $me;
 	}
 
 	public static function load(string $gameId) : Game {
-		dbg('loading');
-		return unserialize(file_get_contents($gameId));
+		dbg('loading', $gameId);
+		return unserialize(file_get_contents(self::getGameFileName($gameId)));
 	}
 
 	public function getTable() : Table {

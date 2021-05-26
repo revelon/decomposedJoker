@@ -37,6 +37,9 @@
 		h3 {text-align: center; color: Pink;}
 		div#guiTable {column-count: 2;}
 		div.menu button {width: 100%; padding: 4px;}
+		div#help {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none}
+		div#help.visible {display: block;}
+		div#help button {float: right;}
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
@@ -57,6 +60,7 @@
 
 		var allCards = {}; // all current game cards in the full deck
 		var playerId = ''; // current player secret identifier
+		var gameId = ''; // current game ID
 		var canModifyTable = false; // flag, if user already made one full set and can add cards to other sets
 		var players = {}; // all players involved in current game
 		var hand = []; // player's cards in hand
@@ -149,12 +153,21 @@
 				console.log('trying activate first set + alter existing ones');
 				firstDynamicUnlock();
 			}
+			if (e.code == 'Escape') {
+				if (document.getElementById('help').classList.contains('visible')) {
+					document.getElementById('help').classList.toggle('visible');
+				}
+			}
 		}
 
 		async function initGame() {
 			console.log('method: initGame');
+			if (!initHelperPrepend()) {
+				return;
+			}
+
 			try {
-				const deck = await postData({ action: 'initGame' });
+				const deck = await postData({ action: 'initGame' , 'gameId': window.gameId });
 				deck.forEach(c => window.allCards[c.id] = c);
 				//console.dir('initGame', window.allCards);
 			} catch (err) {
@@ -165,9 +178,13 @@
 		}
 
 		async function joinGame() {
-			console.log('method: joinGame');  // add ID later !!!
+			console.log('method: joinGame');
+			if (!initHelperPrepend()) {
+				return;
+			}
+
 			try {
-				const deck = await postData({ action: 'getGameCards' });
+				const deck = await postData({ action: 'getGameCards', 'gameId': window.gameId });
 				deck.forEach(c => window.allCards[c.id] = c);
 				//console.dir('joinGame', window.allCards);
 			} catch (err) {
@@ -175,6 +192,20 @@
 			}
 
 			initHelper();
+		}
+
+		function initHelperPrepend() {
+			console.log('method: initHelperPrepend', window.localStorage.getItem('gameId'));
+			const str = window.prompt("Please enter game's name", window.localStorage.getItem('gameId') ? window.localStorage.getItem('gameId') : Math.random().toString(36).substring(2, 8));
+			if (!str) {
+				return false;
+			} else {
+				window.gameId = str;
+			}
+			if (window.gameId != window.localStorage.getItem('gameId')) {
+				window.localStorage.setItem('gameId', window.gameId);
+			}
+			return true;
 		}
 
 		function initHelper() {
@@ -186,18 +217,22 @@
 			document.getElementById('guiGameInit').setAttribute('disabled', true);
 			document.getElementById('guiGameJoin').setAttribute('disabled', true);
 			document.getElementById('guiRegPlayer').removeAttribute('disabled');
+			document.getElementById('gameIndicator').innerText = 'Game: '+ window.gameId;
 
 			startAutoRefresh();
 		}
 
 		async function registerPlayer() {
 			console.log('method: registerPlayer', window.localStorage.getItem('playerName'));
-			const name = prompt("Please enter your name", window.localStorage.getItem('playerName') ? window.localStorage.getItem('playerName') : 'PlayerX');
+			let name = window.prompt("Please enter your name", window.localStorage.getItem('playerName') ? window.localStorage.getItem('playerName') : 'PlayerX');
+			if (!name) {
+				return;
+			}
 			if (name != window.localStorage.getItem('playerName')) {
 				window.localStorage.setItem('playerName', name);
 			}
 			try {
-				const plr = await postData({ action: 'registerPlayer', 'name': name });
+				const plr = await postData({ action: 'registerPlayer', 'gameId': window.gameId, 'name': name });
 				if (plr.playerId) {
 					window.playerId = plr.playerId;
 					window.hand[0].cards = plr.hand;
@@ -217,7 +252,7 @@
 		async function startGame() {
 			console.log('method: startGame', window.playerId);
 			try {
-				if (await postData({ action: 'setActivePlayer', 'playerId': window.playerId })) {
+				if (await postData({ action: 'setActivePlayer', 'gameId': window.gameId, 'playerId': window.playerId })) {
 					console.dir('startGame', true);
 					await getHand(true);
 					window.gameStatus = 'playing';
@@ -240,7 +275,7 @@
 				document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
 				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
 				try {
-					const p = await postData({ action: 'getGameInfo', 'playerId': window.playerId, 'knownStateFrom': window.lastModifiedAt });
+					const p = await postData({ action: 'getGameInfo', 'gameId': window.gameId, 'playerId': window.playerId, 'knownStateFrom': window.lastModifiedAt });
 					// changed state?
 					const change = (window.gameStatus != p.gameStatus || window.myTurn != p.amIActivePlayer) ? true : false;
 					window.gameStatus = p.gameStatus;
@@ -289,7 +324,7 @@
 				return;
 			}
 			try {
-				const hand = await postData({ action: 'getHand', 'playerId': window.playerId });
+				const hand = await postData({ action: 'getHand', 'gameId': window.gameId, 'playerId': window.playerId });
 				// store previous hand cards
 				window.lastHandCards.b = [...window.lastHandCards.a];
 				window.lastHandCards.a = [...window.hand[0].cards];
@@ -310,7 +345,7 @@
 				return;
 			}
 			try {
-				if(await postData({ action: 'getCard', 'playerId': window.playerId })) {
+				if(await postData({ action: 'getCard', 'gameId': window.gameId, 'playerId': window.playerId })) {
 					window.myTurn = false;
 				}
 			} catch (err) {
@@ -330,7 +365,7 @@
 			}
 
 			try {
-				const tbl = await postData({ action: 'getTable', 'playerId': window.playerId });
+				const tbl = await postData({ action: 'getTable', 'gameId': window.gameId, 'playerId': window.playerId });
 
 				// store previous table cards
 				window.lastTableCards.b = [...window.lastTableCards.a];
@@ -342,7 +377,7 @@
 				window.table = [];
 				tbl.forEach( grp => {
 					let set = {};
-					set.id = "existing-" + Math.random().toString(12).substring(2, 8);
+					set.id = "existing-" + Math.random().toString(36).substring(2, 8);
 					set.controls = window.canModifyTable;
 					set.cards = grp;
 					window.table.push(set);
@@ -416,7 +451,7 @@
 						fullTable.push(cardSet);
 					}
 				}
-				const turn = await postData({ action: 'doTableChange', 'playerId': window.playerId, 'table': fullTable, 'hand': handCards });
+				const turn = await postData({ action: 'doTableChange', 'gameId': window.gameId, 'playerId': window.playerId, 'table': fullTable, 'hand': handCards });
 				console.dir('doTableChange ended as', turn);
 				// do all loading and rendering, table etc.... !!!!
 				await getServerState();
@@ -475,7 +510,7 @@
 			}
 			console.log('method: createEmptySet');
 			let set = {};
-			set.id = "new-" + Math.random().toString(12).substring(2, 8);
+			set.id = "new-" + Math.random().toString(36).substring(2, 8);
 			set.controls = true;
 			set.cards = [];
 			window.table.push(set);
@@ -735,11 +770,6 @@
 </head>
 <body>
 
-	<div id="actions">
-		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>&#10132; Get Card</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
-		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>&#10148; Validate Changes</button>
-	</div>
-
 	<div class="wrapper">
 		<div class="box menu">
 			<img src="joker.svg">
@@ -750,8 +780,9 @@
 			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>&#8858; Register Player</button>
 			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Start Game</button>
 			<button onclick='getServerState()' id='guiUndoRefresh' disabled>&#8634; Refresh (Undo)</button>
-			<button onclick='alert("Help\n\nKey A = activate altering sets during introducing my first set\nKey S = swap two selected cards\n....")'>? Help</button>
+			<button onclick='document.getElementById("help").classList.toggle("visible")'>? Help</button>
 			<hr>
+			<h3 id="gameIndicator"></h3>
 			<h3 id="indicator"></h3>
 		</div>
 
@@ -771,6 +802,20 @@
 		</div>
 	</div>
 
+	<div id="actions">
+		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>&#10132; Get Card</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
+		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>&#10148; Validate Changes</button>
+	</div>
+
+	<div id="help">
+		<button onclick='document.getElementById("help").classList.toggle("visible")'>X</button>
+		<h2>Help<h2>
+		<ul>
+			<li>key A = activate altering sets during introducing my first set</li>
+			<li>key S = swap two selected cards</li>
+		</ul>
+	</div>
+
 </body>
 </html>
 
@@ -779,11 +824,9 @@ vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a ro
 lepe vyresit konec hry, omezit statusy?
 umoznit na konci jeste dolozit sve karty
 nepreblikavat 2x provedenou zmenu (zkusit)
-pridat podporu vice paralelnich her
 4 z druhu jdou rozebrat i kdyz neni nahrada za jokera
-zkusit drzet ID sestav persistentne
+zkusit drzet ID sestav persistentne?
 vubec neposilat na validaci sestavy kratsi 3 karet
 zrusit oramovani sestavy a upravit zobrazeni i prazdnych
-zuzit levy sloupec
 joker v ruce hlaska na GUI, mozna i jine
 -->

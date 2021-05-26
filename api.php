@@ -12,14 +12,16 @@ $data = json_decode($json);
 
 switch ($data->action) {
 	case "initGame":
-		unlink(Game::FILENAME); // should not be necessary
-		$play = new Game();
+		if (file_exists(Game::getGameFileName($data->gameId))) {
+			unlink(Game::getGameFileName($data->gameId));
+		}
+		$play = new Game($data->gameId);
 		$play->startNewGame();
 		$play->save();
 		echo json_encode( [ 'data' => $play->getDeck()->getCards(), 'dbg' => ob_get_clean() ] );
 		break;
 	case "getGameCards":
-		$play = Game::load(Game::FILENAME);
+		$play = Game::load($data->gameId);
 		if ($play->status === 'inactive') {
 			$givenCards = $play->getCardsInPlayersHands();
 			echo json_encode( [ 'data' => array_merge($givenCards, $play->getDeck()->getCards()), 'dbg' => ob_get_clean() ] );
@@ -29,7 +31,7 @@ switch ($data->action) {
 		}
 		break;
 	case "registerPlayer":
-		$play = Game::load(Game::FILENAME);
+		$play = Game::load($data->gameId);
 		if ($play->status === 'inactive') {
 			$pid = $play->assignPlayer($data->name);
 			if ($pid) {
@@ -45,7 +47,7 @@ switch ($data->action) {
 		}
 		break;
 	case "setActivePlayer": // and start game
-		$play = Game::load(Game::FILENAME);
+		$play = Game::load($data->gameId);
 		if ($play->getActivePlayerId() === '') {
 			$play->setActivePlayer($data->playerId);
 			$play->status = 'playing';
@@ -57,9 +59,9 @@ switch ($data->action) {
 		}
 		break;
 	case "getGameInfo":
-		$changedAt = filemtime(Game::FILENAME); // unit timestamp
+		$changedAt = filemtime(Game::getGameFileName($data->gameId)); // unix timestamp
 		if ($data->knownStateFrom < $changedAt) { // performance optimization for very often requests
-			$play = Game::load(Game::FILENAME);
+			$play = Game::load($data->gameId);
 			echo json_encode( [ 'data' => [ 'players' => $play->getPlayersInfo(), 'gameStatus' => $play->status , 
 				'amIActivePlayer' => ($play->getActivePlayerId() && $play->getActivePlayerId() === $data->playerId),
 				'lastModifiedAt' => $changedAt ], 'dbg' => ob_get_clean() ] );
@@ -68,17 +70,17 @@ switch ($data->action) {
 		}
 		break;
 	case "getHand":
-		$play = Game::load(Game::FILENAME);
+		$play = Game::load($data->gameId);
 		$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 		echo json_encode( [ 'data' => $hand, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getTable":
-		$play = Game::load(Game::FILENAME);
+		$play = Game::load($data->gameId);
 		$table = $play->getTable()->getGroupsAsArray();
 		echo json_encode( [ 'data' => $table, 'dbg' => ob_get_clean() ] );
 		break;
 	case "getCard":
-		$play = Game::load(Game::FILENAME);
+		$play = Game::load($data->gameId);
 		if ($play->getActivePlayerId() === $data->playerId && $play->doTurnAsGetCard($data->playerId)) {
 			//$hand = $play->getPlayerCopy($data->playerId)->getHand()->getCardIds();
 			$play->save();
@@ -126,8 +128,7 @@ switch ($data->action) {
 			echo json_encode( [ 'message' => 'Some table set is invalid', 'dbg' => ob_get_clean() ] );
 			break;
 		}
-		$play = new Game();
-		$play = Game::load(Game::FILENAME);
+		$play = Game::load($data->gameId);
 		if ($play->doTurnAsTableChange($data->playerId, $table, $hand)) {
 			$play->save(); // won = player won the game
 			echo json_encode( [ 'data' => ($play->status === 'finished') ? 'won' : 'done', 'dbg' => ob_get_clean() ] );
