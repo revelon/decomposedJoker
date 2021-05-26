@@ -2,12 +2,12 @@
 <html lang="cs" id="html">
 <head>
 	<meta charset="utf-8">
-	<title>Decomposed Joker GUI</title>
+	<title>Rozkládaný Žolík</title>
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiTable div div {width: 38px; height: 70px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div#guiHand div div, div#guiTable div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
 		div#guiTable div.c5 div {margin-left: -4px;}
 		div#guiTable div.c6 div {margin-left: -8px;}
@@ -20,7 +20,7 @@
 		div#guiTable div.c13 div {margin-left: -18px; width: 29px;}
 		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
 		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
-		div#guiTable div img {width: 44px; height: 76px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0; user-select: none;}
+		div#guiTable div img {width: 44px; height: 78px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0; user-select: none;}
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px;}
 		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black; transform: translateY(-6px);}
 		div.spades {background-color: White; color: Black;} 
@@ -34,14 +34,15 @@
 		div > p:nth-of-type(3) {text-align: right;}
 		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 1.8em;}
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
-		h3 {text-align: center; color: Pink;}
+		h3 {text-align: left; color: Pink;}
 		div#guiTable {column-count: 2;}
 		div.menu button {width: 100%; padding: 4px;}
-		div#help {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none}
+		div#help {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double DarkMaroon; display: none;}
+		div#help ul {font-size: 0.8em; line-height: 120%; font-weight: normal;}
 		div#help.visible {display: block;}
 		div#help button {float: right;}
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
-		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px;}
+		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px; cursor: pointer;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
 		div div.changed {transform: translateY(6px); filter: drop-shadow(-3px 3px 1px Black);}
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
@@ -196,7 +197,7 @@
 
 		function initHelperPrepend() {
 			console.log('method: initHelperPrepend', window.localStorage.getItem('gameId'));
-			const str = window.prompt("Please enter game's name", window.localStorage.getItem('gameId') ? window.localStorage.getItem('gameId') : Math.random().toString(36).substring(2, 8));
+			const str = window.prompt("Zadej název hry:", window.localStorage.getItem('gameId') ? window.localStorage.getItem('gameId') : Math.random().toString(36).substring(2, 8));
 			if (!str) {
 				return false;
 			} else {
@@ -217,14 +218,14 @@
 			document.getElementById('guiGameInit').setAttribute('disabled', true);
 			document.getElementById('guiGameJoin').setAttribute('disabled', true);
 			document.getElementById('guiRegPlayer').removeAttribute('disabled');
-			document.getElementById('gameIndicator').innerText = 'Game: '+ window.gameId;
+			document.getElementById('gameIndicator').innerText = 'Hra: '+ window.gameId;
 
 			startAutoRefresh();
 		}
 
 		async function registerPlayer() {
 			console.log('method: registerPlayer', window.localStorage.getItem('playerName'));
-			let name = window.prompt("Please enter your name", window.localStorage.getItem('playerName') ? window.localStorage.getItem('playerName') : 'PlayerX');
+			let name = window.prompt("Zadej jméno hráče:", window.localStorage.getItem('playerName') ? window.localStorage.getItem('playerName') : 'Hráč X');
 			if (!name) {
 				return;
 			}
@@ -238,7 +239,7 @@
 					window.hand[0].cards = plr.hand;
 					console.dir('registerPlayer', plr);
 					document.getElementById('guiRegPlayer').removeAttribute('disabled');
-					document.getElementById('indicator').innerText = 'Player: '+ name;
+					document.getElementById('indicator').innerText = 'Hráč: '+ name;
 					document.getElementById('guiRegPlayer').setAttribute('disabled', true);
 					document.getElementById('guiGameStart').removeAttribute('disabled');
 					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
@@ -289,7 +290,7 @@
 					}
 					if (window.gameStatus == 'finished') {
 						startAutoRefresh(true);
-						alert('Game Over');
+						alert('Konec hry!');
 					}
 				} catch (err) {
 					console.dir('err', err);
@@ -459,7 +460,7 @@
 				window.canModifyTable = true;
 				if (turn == "won") {
 					await getGameInfo(true);
-					alert('Victory!!');
+					alert('Hurá! Vítězství!');
 					startAutoRefresh(true);
 				} else {
 					window.myTurn = false;
@@ -715,9 +716,9 @@
 			document.getElementById("html").animate(
 				[
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' },
-					{ background: 'Black' },
+					{ background: 'Blue' },
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' }
-				], 700);
+				], 800);
 		}
 
 		function showFailure() {
@@ -773,46 +774,59 @@
 	<div class="wrapper">
 		<div class="box menu">
 			<img src="joker.svg">
-			<h1>Decomposed Joker</h1>
+			<h1>Rozkládaný žolík</h1>
 
-			<button onclick='initGame()' id='guiGameInit'>&#9863; Init Game</button>
-			<button onclick='joinGame()' id='guiGameJoin'>&#9865; Join Game</button>
-			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>&#8858; Register Player</button>
-			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Start Game</button>
-			<button onclick='getServerState()' id='guiUndoRefresh' disabled>&#8634; Refresh (Undo)</button>
-			<button onclick='document.getElementById("help").classList.toggle("visible")'>? Help</button>
+			<button onclick='initGame()' id='guiGameInit'>&#9863; Založit hru</button>
+			<button onclick='joinGame()' id='guiGameJoin'>&#9865; Připojit se</button>
+			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>&#8858; Registrovat hráče</button>
+			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Zahájit hru</button>
+			<button onclick='getServerState()' id='guiUndoRefresh' disabled>&#8634; Obnovit (Zpět)</button>
+			<button onclick='document.getElementById("help").classList.toggle("visible")'>? Nápověda</button>
 			<hr>
 			<h3 id="gameIndicator"></h3>
 			<h3 id="indicator"></h3>
 		</div>
 
 		<div class="box players">
-			<h6>Players</h6>
+			<h6>Hráči</h6>
 			<div id='guiPlayers'></div>
 		</div>
 
 		<div class="box hand">
-			<h6>Hand</h6>
+			<h6>Ruka</h6>
 			<div id='guiHand'></div>
 		</div>
 
 		<div class="box table" onclick='createEmptySet()'>
-			<h6>Table</h6>
+			<h6>Stůl</h6>
 			<div id='guiTable'></div>
 		</div>
 	</div>
 
 	<div id="actions">
-		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>&#10132; Get Card</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
-		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>&#10148; Validate Changes</button>
+		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>&#10132; Vzít kartu</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
+		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>&#10148; Provést změny</button>
 	</div>
 
 	<div id="help">
 		<button onclick='document.getElementById("help").classList.toggle("visible")'>X</button>
-		<h2>Help<h2>
+		<h2>Nápověda<h2>
 		<ul>
-			<li>key A = activate altering sets during introducing my first set</li>
-			<li>key S = swap two selected cards</li>
+			<li>První hráč musí hru <b>založit</b> a další hráči se pak mohou ke stejně pojmenované hře <b>připojit</b>.</li>
+			<li>Pro hru je potřeba se jako hráč <b>registrovat</b> pod zvoleným jménem.</li>
+			<li>Jakmile je hra založena a registrován alespoň jeden hráč, je možno hru <b>zahájit</b>.</li>
+			<li>Na tahu je vždy právě jeden hráč (ukazatel vlevo dole) a ostatní hráči nemají v té chvíli možnost provádět žádné akce.</li>
+			<li>Během hry může hráč buď <b>vzít kartu</b> nebo, pokud vyložil některé karty z ruky na stůl, chtít <b>provést změny</b>.</li>
+			<li>Karty pro vytvoření nové sestavy je potřeba <b>označovat ve správném pořadí</b> vždy zleva doprava.</li>
+			<li>Nová sestava na stole vznikne vždy při kliknutí na stůl. Jsou-li v tu chvíli již označeny některé karty, rovnou se do ní přidají.</li>
+			<li>Dokládat označené karty k sestavám zleva nebo zprava lze kliknutím na prazdnou pozici vlevo nebo vpravo.</li>
+			<li>Probliknutí obrazovky modře signalizuje úspěch tahu aktuálního hráče, naopak probliknutí červeně signalizuje neúspěch.</li>
+			<li>Karty které jsou uskočeny směrem dolů jsou ty, které byly v minulém tahu změněny.</li>
+			<li>Pokud se hráč dostane do stavu, kdy na stole udělal změny, které se nedají dokončit nebo se nedaří zvalidovat, se může vrátit na začátek svého tahu a <b>obnovit</b> jeho počáteční stav.</li>
+			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění.</li>
+			<li>Pokud tlačítka <b>Vzít kartu</b> a <b>Provést změny</b> překáží nebo jsou na nevhodném místě, je možné je za šipku vedle nich přetáhnout na obrazovce na libovolné místo.</li>
+			<li><b>klávesa A</b> = pokud chce hráč po vyložení své první validní sestavy měnit i sestavy již na stole, obojí v jediném tahu.</li>
+			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, např. žolík a karta namísto něj, provede se jejich výměna.</li>
 		</ul>
 	</div>
 
@@ -829,4 +843,6 @@ zkusit drzet ID sestav persistentne?
 vubec neposilat na validaci sestavy kratsi 3 karet
 zrusit oramovani sestavy a upravit zobrazeni i prazdnych
 joker v ruce hlaska na GUI, mozna i jine
+pridat confirm na vzit kartu kdyz nekdo dal uz karty z ruky na stul
+predelat ID hry at jej prideluje server!!!
 -->
