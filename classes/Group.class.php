@@ -3,13 +3,16 @@
 // Group is basically stack of validated Cards with validation extension, but it is a little bit dirty...
 class Group extends Cards {
 
+	public string $id = '';
+
 	private function __construct() {
 	}
 
-	public static function createSet(Cards $newSet) : ? self {
+	public static function createSet(Cards $newSet, string $id) : ? self {
 		if (self::validate($newSet)) {
 			$set = new Group();
 			$set->rows = $newSet->getCards();
+			$set->id = $id;
 			return $set;
 		} else {
 			return null;

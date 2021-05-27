@@ -9,8 +9,6 @@
 		body {margin: 0px;}
 		div#guiHand div div, div#guiTable div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
 
-		div#guiHand div div {margin-left: -8px;} /* pokus, zmenit pak */
-
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
 		div#guiTable div.c5 div {margin-left: -4px;}
 		div#guiTable div.c6 div {margin-left: -8px;}
@@ -25,7 +23,7 @@
 		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
 		div#guiTable div img {width: 44px; height: 78px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0; user-select: none;}
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black; transform: translateY(-6px) !important;}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black; transform: translateY(-7px) !important;}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
@@ -39,16 +37,17 @@
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#guiTable {column-count: 2;}
+		div#guiTable div {margin-bottom: 8px;}
 		div.menu button {width: 100%; padding: 4px;}
 		div#help {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double DarkMaroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
 		div#help.visible {display: block;}
 		div#help button {float: right;}
-		div#turns {font-size: 0.7em; position: fixed; left: 1%; top: 1%; color: Black}
+		div#turns {font-size: 0.8em; position: fixed; left: 1%; top: 1%; color: White;}
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px; cursor: pointer;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
-		div div.changed {transform: translateY(6px); filter: drop-shadow(-3px 3px 1px Black);}
+		div div.changed {transform: translateY(7px); filter: drop-shadow(-3px 3px 1px Black);}
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -4px 0 0 -2px;}
 		/* main layout */
@@ -69,7 +68,7 @@
 		var canModifyTable = false; // flag, if user already made one full set and can add cards to other sets
 		var players = {}; // all players involved in current game
 		var hand = []; // player's cards in hand
-		var lastHandCards = {a: [], b: []}; // previous player's cards in hand history, last two changes
+		var lastHandCards = {a: [], b: [], c: []}; // previous player's cards in hand history, last change + c = reset
 		var sets = []; // preparing, unfinished, unvalidated, new sets of cards (client side only)
 		var table = []; // playing table with validated sets of cards (server side)
 		var lastTableCards = {a: [], b: []}; // previous table's cards history, last two changes
@@ -199,8 +198,7 @@
 		function initHelper() {
 			console.log('method: initHeper');
 
-			const hand = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
-			window.hand.push(hand);
+			window.hand[0] = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
 
 			document.getElementById('guiGameInit').setAttribute('disabled', true);
 			document.getElementById('guiGameJoin').setAttribute('disabled', true);
@@ -212,14 +210,13 @@
 
 		function finishHelper() {
 			console.log('method: finishHeper');
-			startAutoRefresh(true);
 
 			window.allCards = {};
 			window.playerId = '';
 			window.canModifyTable = false;
 			window.players = {};
 			window.hand = [];
-			window.lastHandCards = {a: [], b: []};
+			window.lastHandCards = {a: [], b: [], c: []};
 			window.table = [];
 			window.lastTableCards = {a: [], b: []};
 			window.actives = [];
@@ -235,8 +232,6 @@
 			document.getElementById('guiGameJoin').removeAttribute('disabled');
 			document.getElementById('guiRegPlayer').setAttribute('disabled', true);
 			document.getElementById('guiUndoRefresh').setAttribute('disabled', true);
-
-			showFinish();
 		}
 
 		async function registerPlayer() {
@@ -252,7 +247,8 @@
 				const plr = await postData({ action: 'registerPlayer', 'gameId': window.gameId, 'name': name });
 				if (plr.playerId) {
 					window.playerId = plr.playerId;
-					window.hand[0].cards = plr.hand;
+					window.hand[0].cards = plr.hand.slice();
+					window.lastHandCards.c = plr.hand.slice();
 					console.dir('registerPlayer', plr);
 					document.getElementById('guiRegPlayer').removeAttribute('disabled');
 					document.getElementById('indicator').innerText = 'Hráč: '+ name;
@@ -272,7 +268,6 @@
 			try {
 				if (await postData({ action: 'setActivePlayer', 'gameId': window.gameId, 'playerId': window.playerId })) {
 					console.dir('startGame', true);
-					//await getHand(true);
 					window.gameStatus = 'playing';
 					document.getElementById('guiGameStart').setAttribute('disabled', true);
 					document.getElementById('guiTurnGetCard').removeAttribute('disabled');
@@ -293,8 +288,9 @@
 				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
 				try {
 					const p = await postData({ action: 'getGameInfo', 'gameId': window.gameId, 'playerId': window.playerId, 'knownStateFrom': window.lastModifiedAt });
+					console.dir('returned server info', JSON.stringify(p, null, 2));
 					// changed state?
-					const change = (window.gameStatus !== p.gameStatus || window.myTurn !== p.amIActivePlayer) ? true : false;
+					const change = (window.gameStatus !== p.gameStatus || window.myTurn !== p.amIActivePlayer || p.lastModifiedAt !== window.lastModifiedAt) ? true : false;
 					window.gameStatus = p.gameStatus;
 					window.players = p.players;
 					window.myTurn = p.amIActivePlayer;
@@ -306,8 +302,11 @@
 						renderGameInfo(change);
 					}
 					if (window.gameStatus === 'finished') {
-						finishHelper();
+						await getGameInfo(true);
+						startAutoRefresh(true);
+						showFinish();
 						alert('Konec hry!');
+						finishHelper();
 					}
 				} catch (err) {
 					console.dir('err', err);
@@ -327,7 +326,7 @@
 					return;
 				}
 				if (!window.tick) {
-					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 2000);
+					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1000);
 				} else {
 					//window.clearInterval(window.tick);
 				}
@@ -336,38 +335,37 @@
 			}
 		}
 
-		async function getHand(render = false) {
+		async function getHand() {
 			console.log('method: getHand');
 			if (!window.playerId || !window.gameStatus === 'playing') {  // release a bit later
 				return;
 			}
 			try {
 				const hand = await postData({ action: 'getHand', 'gameId': window.gameId, 'playerId': window.playerId });
-				// store previous hand cards
-				window.lastHandCards.b = [...window.lastHandCards.a];
-				window.lastHandCards.a = [...window.hand[0].cards];
-				window.hand[0].cards = hand;
+				//console.dir('hand change before', JSON.stringify(window.hand, null, 2), JSON.stringify(window.lastHandCards, null, 2));
+				window.lastHandCards.c = hand.slice(); // reset state
+				window.lastHandCards.b = window.lastHandCards.a.slice();
+				window.lastHandCards.a = window.hand[0].cards.slice();
+				window.hand[0].cards = hand.slice();
 				window.hand[0].controls = false;
-				console.dir('getHand', window.hand);
+				//console.dir('hand change after', JSON.stringify(window.hand, null, 2), JSON.stringify(window.lastHandCards, null, 2));
+				console.dir('getHand success', window.hand);
 			} catch (err) {
 				console.dir('err', err);
 			}
-			if (render) {
-				renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
-			}
 		}
 
-		async function getCard(render = false) {
+		async function getCard() {
 			console.log('method: getCard');
 			if (!window.gameStatus === 'playing') {
 				return;
 			}
 			// do re-check if it is really intended step to do
-			if (window.lastHandCards.a.toString() !== window.hand[0].cards.toString()) {
+			if (window.lastHandCards.c.toString() !== window.hand[0].cards.toString()) {
 			 	if(window.confirm('Opravdu si vzít kartu?')) {
 			 		// player really wants to abandon current changes
 					console.log('player wants to really get new card, doing hand reset');
-					window.hand[0].cards = window.lastHandCards.a;
+					window.hand[0].cards = window.lastHandCards.c.slice();
 					audioObj.play();
 			 	} else {
 			 		console.log('player does not want to take new card');
@@ -383,13 +381,9 @@
 				console.dir('err', err);
 				showFailure();
 			}
-			if (render) {
-				await getHand(true);
-			}
-			//showSuccess();
 		}
 
-		async function getTable(render = false) {
+		async function getTable() {
 			console.log('method: getTable');
 			if (!window.gameStatus == 'playing') {
 				return;
@@ -398,34 +392,53 @@
 			try {
 				const tbl = await postData({ action: 'getTable', 'gameId': window.gameId, 'playerId': window.playerId });
 
-				// store previous table cards
-				window.lastTableCards.b = [...window.lastTableCards.a];
+				const comp = ['id', 'cards']; // which properties are significant
+				console.dir('comparing new and previous table', JSON.stringify(tbl, comp), JSON.stringify(window.table, comp));
+				// store previous table cards and update objects, if changed only
+				if (JSON.stringify(tbl, comp) === JSON.stringify(window.table, comp)) {
+					console.log('tables seems to be the same, exiting without changes');
+					return;
+				}
+				window.lastTableCards.b = window.lastTableCards.a.slice();
 				window.lastTableCards.a = [];
 				window.table.forEach( grp => {
-					window.lastTableCards.a = grp.cards.concat(window.lastTableCards.a);
+					grp.cards.forEach( c => {
+						window.lastTableCards.a.push(grp.id + "_" + c);
+					});
 				});
 
 				window.table = [];
 				tbl.forEach( grp => {
-					let set = {};
-					set.id = "existing-" + Math.random().toString(36).substring(2, 8);
-					set.controls = window.canModifyTable;
-					set.cards = grp;
-					window.table.push(set);
+					window.table.push({id: grp.id, controls: window.canModifyTable, cards: grp.cards.slice()});
 				});
-				console.dir('getTable', window.table);
+				console.dir('getTable results', window.table, window.lastTableCards);
 			} catch (err) {
 				console.dir('err', err);
 			}
-			if (render) {
-				renderCardGroups(window.table, window.guiTable, window.lastTableCards);
-			}
 		}
 
-		async function getServerState() {
-			console.log('method: getServerState');
-			await getHand(true);
-			await getTable(true);
+		async function getServerState(preserveHistory) {
+			console.log('method: getServerState', preserveHistory);
+			
+			// store last changes history
+			let ah, at;
+			if (preserveHistory) {
+				ah = window.lastHandCards.a;
+				at = window.lastTableCards.a;
+			}
+
+			await getHand();
+			await getTable();
+
+			// and now return it
+			if (preserveHistory) {
+				window.lastHandCards.a = ah.slice();
+				window.lastHandCards.b = ah.slice();
+				window.lastTableCards.a = at.slice();
+			}
+
+			renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
+			renderCardGroups(window.table, window.guiTable, window.lastTableCards);
 			window.actives = [];
 			audioObj.play();
 		}
@@ -433,8 +446,8 @@
 		async function validateGroup(group) {
 			console.log('method: validateGroup', group);
 			try {
-				let cardSet = [];
-				group.forEach( c => cardSet.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
+				let cardSet = {id: group.id, cards:[]};
+				group.forEach( c => cardSet.cards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
 				const grp = await postData({ action: 'validateGroup', 'cards': cardSet });
 				console.dir('validateGroup', grp);
 				return grp;
@@ -461,34 +474,35 @@
 				let handCards = [];
 				window.hand[0].cards.forEach( c => handCards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
 
-				// merge prepared sets and existing table to new table
-				let newTbl = [];
-				for(const s in window.table) {
-					newTbl.push(window.table[s]);
-				}
-				console.dir('trying to do tableChange as new table...', newTbl);
-				window.table = newTbl;
-
 				// and now try to do server side validation
 				let fullTable = [];
 				for(const s in window.table) {
 					console.log('group_id on existing table...', s);
-					let cardSet = [];
-					window.table[s].cards.forEach( c => cardSet.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
-					if(cardSet.length) { // do not send empty sets by accident
+					let cardSet = {id: window.table[s].id, cards:[]};
+					window.table[s].cards.forEach( c => cardSet.cards.push({id: c, type: window.allCards[c].type, value: window.allCards[c].value}) );
+					if(cardSet.cards.length) { // do not send empty sets by accident
 						fullTable.push(cardSet);
 					}
 				}
 				const turn = await postData({ action: 'doTableChange', 'gameId': window.gameId, 'playerId': window.playerId, 'table': fullTable, 'hand': handCards });
 				console.dir('doTableChange ended as', turn);
-				// do all loading and rendering, table etc.... !!!!
-				await getServerState();
 				window.canModifyTable = true;
 				if (turn === "won") {
 					await getGameInfo(true);
-					finishHelper();
+					startAutoRefresh(true);
+					showFinish();
 					alert('Hurá! Vítězství!');
+					finishHelper();
 				} else {
+					// try to push history forward
+					window.lastTableCards.b = window.lastTableCards.a.slice();
+					window.lastTableCards.a = [];
+					window.table.forEach( grp => {
+						grp.cards.forEach( c => {
+							window.lastTableCards.a.push(grp.id + "_" + c);
+						});
+					});
+
 					window.myTurn = false;
 					audioObj.play();
 				}
@@ -505,15 +519,16 @@
 		async function firstDynamicUnlock() {
 			console.log('method: firstDynamicUnlock');
 			// user should have at least one new valid set from hand ready
-			if (window.gameStatus === 'playing' && window.hand[0].cards.length < window.lastHandCards.a.length) {
+			if (window.gameStatus === 'playing' && window.hand[0].cards.length < window.lastHandCards.c.length) {
 				for (let i in window.table) {
-					if (window.table[i].id.indexOf('new') === 0 && window.table[i].cards.length) {
+					// following condition is no longer valid, re-made it !!
+					//if (window.table[i].id.indexOf('new') === 0 && window.table[i].cards.length) {
 						let valid = await validateGroup(window.table[i].cards);
 						if (valid) {
 							window.canModifyTable = true;
 							break;
 						}
-					}
+					//}
 				}
 				if (window.canModifyTable) {
 					for (let i in window.table) {
@@ -538,7 +553,7 @@
 			}
 			console.log('method: createEmptySet');
 			let set = {};
-			set.id = "new-" + Math.random().toString(36).substring(2, 8);
+			set.id = Math.random().toString(36).substring(2, 8);
 			set.new = true;
 			set.controls = true;
 			set.cards = [];
@@ -566,9 +581,16 @@
 						card.addEventListener('click', (e) => dummyClick(e), true);
 					}
 					// mark cards new from two previous known states, but not new sets
-					if (!groups[s].new && (previousIds.a.includes(c) || previousIds.b.includes(c))) {
-						card.classList.add('changed');
-						console.dir('adding changed class to card id', c);
+					if (groups[s].id != 0) { // not hand, table has indexes with group prefixes
+						if (!groups[s].new && (!previousIds.a.includes(groups[s].id + "_" + c) || !previousIds.b.includes(groups[s].id + "_" + c))) {
+							card.classList.add('changed');
+							console.dir('adding changed class to table card id', c);
+						}
+					} else { // hand
+						if (!groups[s].new && (!previousIds.a.includes(c) || !previousIds.b.includes(c))) {
+							card.classList.add('changed');
+							console.dir('adding changed class to hand card id', c);
+						}
 					}
 					nl.append(card);
 				});
@@ -692,7 +714,7 @@
 					document.getElementById('guiGameStart').setAttribute('disabled', true);
 					document.getElementById('guiUndoRefresh').removeAttribute('disabled');
 				}
-				getServerState();
+				getServerState(false);
 			}
 		}
 
@@ -798,7 +820,7 @@
 			<button onclick='joinGame()' id='guiGameJoin'>&#9865; Připojit se</button>
 			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>&#8858; Registrovat hráče</button>
 			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Zahájit hru</button>
-			<button onclick='getServerState()' id='guiUndoRefresh' disabled>&#8634; Obnovit (Zpět)</button>
+			<button onclick='getServerState(true)' id='guiUndoRefresh' disabled>&#8634; Obnovit (Zpět)</button>
 			<button onclick='document.getElementById("help").classList.toggle("visible")'>? Nápověda</button>
 			<hr>
 			<h3 id="gameIndicator"></h3>
@@ -824,7 +846,7 @@
 	<div id="turns"></div>
 
 	<div id="actions">
-		<button onclick='getCard(true)' id='guiTurnGetCard' disabled>&#10132; Vzít kartu</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
+		<button onclick='getCard()' id='guiTurnGetCard' disabled>&#10132; Vzít kartu</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
 		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>&#10148; Provést změny</button>
 	</div>
 	<div id="help">
@@ -869,7 +891,7 @@ vsechny zmeny, nejen nove karty na stole!!
 translate meni z-index a karty se prekryvaji divne
 nejsou uz window.sets na zruseni ?
 nefungujici pocitadlo
-doladit dalsi start hry
+doladit dalsi start hry, ted je dost rozbity
 opravit vsechny php hinty
 pridat nahodny GC na promazavani starych her
 -->

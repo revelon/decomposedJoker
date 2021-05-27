@@ -7,7 +7,7 @@ spl_autoload_register(function ($class) {
 
 $dbgBuffer = '';
 function dbg(string $msg, ...$var) : void {
-	return;
+	//return;
 	$GLOBALS['dbgBuffer'] .= $msg . " : " . print_r($var, true);
 }
 
@@ -20,5 +20,6 @@ function asserts(string $desc, $expr, bool $expectedResult) : void {
 }
 
 function mylog(string $msg) {
+	return;
 	file_put_contents('./my.log', date("Y-m-d H:i:s") ." (". round(microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"], 2) . ") #". REQID ."# ". $msg ."\n", FILE_APPEND);
 }

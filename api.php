@@ -109,7 +109,7 @@ switch ($data->action) {
 		mylog('CASE getTable start');
 		$play = Game::load($data->gameId);
 		mylog('CASE getTable data loaded');
-		$table = $play->getTable()->getGroupsAsArray();
+		$table = $play->getTable()->getGroups();
 		echo json_encode( [ 'data' => $table, 'dbg' => $dbgBuffer ] );
 		break;
 	case "getCard":
@@ -129,7 +129,7 @@ switch ($data->action) {
 	case "validateGroup":
 		mylog('CASE validateGroup start');
 		$newSet = new Cards();
-		foreach ($data->cards as $c) {
+		foreach ($data->cards->cards as $c) {
 			$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 		}
 		if (Group::validate($newSet)) {
@@ -149,11 +149,11 @@ switch ($data->action) {
 		$problem = false;
 		foreach ($data->table as $grp) {
 			$newSet = new Cards();
-			foreach ($grp as $c) {
+			foreach ($grp->cards as $c) {
 				$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 			}
 			dbg('new set to validate', $newSet);
-			$g = Group::createSet($newSet);
+			$g = Group::createSet($newSet, $grp->id);
 			if ($g) {
 				$table[] = $g;
 			} else {

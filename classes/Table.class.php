@@ -8,10 +8,10 @@ class Table implements \ArrayAccess, \Iterator, \Countable
     public function __construct() {
     }
 
-    public function getGroupsAsArray() : array {
+    public function getGroups() : array {
         $ret = [];
         foreach ($this->rows as $set) {
-             $ret[] = $set->getCardIds();
+             $ret[] = ['id' => $set->id, 'cards' => $set->getCardIds()];
          }
          return $ret;
     }
