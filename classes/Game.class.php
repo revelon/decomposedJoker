@@ -1,14 +1,14 @@
 <?php
 
 class Game {
-	private $id = 'store/';
-	private $players = [];
-	private $allCardIds = [];	
-	private $deck = null;
-	private $table = null;
-	private $activePlayer = '';
-	public $status = 'inactive'; // inactive | playing | finished
-	public $turns = 0;
+	private ?string $id = 'store/';
+	private array $players = [];
+	private array $allCardIds = [];	
+	private ?Cards $deck = null;
+	private ?Table $table = null;
+	private string $activePlayer = '';
+	public string $status = 'inactive'; // inactive | playing | finished
+	public int $turns = 0;
 
 	function __construct(string $gameId) {
 		$this->id = self::getGameFileName($gameId);
@@ -80,24 +80,24 @@ class Game {
 		}
 		$this->players[$id]->addCardToHand($this->deck->popCard());
 		dbg("player's hand", $this->players[$id]->getHand());
-		$this->nextPlayerTurn(); //var_dump($id, $this->activePlayer, sizeOf($deck)); die;
+		$this->nextPlayerTurn();
 		return true;
 	}
 
 	public function doTurnAsTableChange(string $id, Table $newTable, Cards $newHand) : bool {
 		// only active player is allowed to make changes
 		if ($id !== $this->activePlayer) {
-			echo "not current/active player is forbidden to play\n";
+			dbg("not current/active player is forbidden to play");
 			return false;
 		}
 		// there should be at least one whole set on the table
 		if (!sizeOf($newTable)) {
-			echo "empty new table\n";
+			dbg("empty new table");
 			return false;
 		}
 		// we should validate that new table has all valid groups
 		if (!$newTable->areAllSetsValid()) {
-			echo "invalid sets on the new table\n";
+			dbg("invalid sets on the new table");
 			return false;
 		}
 		// helper id sets
@@ -121,17 +121,17 @@ class Game {
 
 		// at least one card from player's hand is part of the new table
 		if (!sizeOf($handDiff) || !sizeOf($tableDiff) || sizeOf(array_diff($handDiff, $tableDiff))) {
-			echo "no cards from hand were moved to table\n";
+			dbg("no cards from hand were moved to table");
 			return false;
 		}
 		// there are still all cards in the game, none is missing or extra and they are the same ones
 		if (sizeOf(array_diff(array_merge($newHandIds, $newTableIds, $otherPlayersHands), $this->allCardIds))) {
-			echo "set of new and old cards are different\n";
+			dbg("set of new and old cards are different");
 			return false;
 		}
 		// no card from previous table is left in player's hand
 		if (sizeOf(array_intersect($currentTableIds, $newHandIds))) {
-			echo "card from table left in new hand\n";
+			dbg("card from table left in new hand");
 			return false;
 		}
 
@@ -145,7 +145,7 @@ class Game {
 		} else {
 			$this->nextPlayerTurn();
 		}
-		echo "finishing valid turn\n";
+		dbg("finishing valid turn");
 		return true;
 	}
 
@@ -153,6 +153,7 @@ class Game {
 	private function nextPlayerTurn() : string {
 		$next = null;
 		$found = false;
+		$this->turns++;		
 		foreach ($this->players as $player) {
 			if ($this->activePlayer === $player->getId()) {
 				$found = true;
@@ -171,14 +172,13 @@ class Game {
 				}
 			}
 		}
-		$this->turns++;
 		return $this->activePlayer; // solve one player game only case
 	}
 
 	public function gameOver(string $id) : void {
 		$this->status = 'finished';
 		$this->players[$this->activePlayer]->winner = true;
-		echo "Player " . $this->players[$id]->getName() . " wins!!!!";
+		dbg("Player " . $this->players[$id]->getName() . " wins!!!!");
 	}
 
 	public function save() : bool {

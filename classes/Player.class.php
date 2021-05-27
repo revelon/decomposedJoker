@@ -2,11 +2,11 @@
 
 class Player {
 
-	private $id = null;
-	private $name = null;
-	private $hand = null;
-	public $canAddCards = false; // activated after first winished set
-	public $won = false;
+	private ?string $id = null;
+	private ?string $name = null;
+	private ?Cards $hand = null;
+	public bool $canAddCards = false; // activated after first winished set
+	public bool $won = false;
 
 	function __construct(string $name) {
 		$this->name = $name;
@@ -20,29 +20,29 @@ class Player {
 
 	public function getPlayerInfo(string $activePlayer) : array {
 		return ['name' => $this->name, 'cards' => sizeOf($this->hand->getCards()), 
-			'status' => ($this->won) ? 'winner' : ($this->id === $activePlayer) ? 'active' : 'idle',
+			'status' => ($this->won) ? 'winner' : (($this->id === $activePlayer) ? 'active' : 'idle'),
 			'canAddCards' => $this->canAddCards ];
 	}
 
-	function getHand() {
+	function getHand() : ?Cards {
 		return $this->hand;
 	}
 
-	function setNewHand(Cards $hand) {
+	function setNewHand(Cards $hand) : void {
 		// add some validations ?
 		$this->hand = $hand;
 	}
 
-	function getName() {
+	function getName() : string {
 		return $this->name;
 	}
 
-	function addCardToHand(Card $card) {
+	function addCardToHand(Card $card) : void {
 		$this->hand->pushCard($card);
 		$this->hand->sortCards();
 	}
 
-	public function getCardByType(string $type, int $value) {
+	public function getCardByType(string $type, int $value) : ?Card {
 		return $this->hand->getCardByType($type, $value);
 	}
 }

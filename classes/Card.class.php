@@ -1,9 +1,9 @@
 <?php
 
 class Card implements \JsonSerializable {
-	public $value = null;
-	public $type = null;
-	private $id = null;
+	public ?int $value = null;
+	public ?string $type = null;
+	private ?string $id = null;
 	const SPADES = 'spades';
 	const CLUBS = 'clubs';
 	const HEARTS = 'hearts';
@@ -16,7 +16,7 @@ class Card implements \JsonSerializable {
 		$this->id = $id ? $id : bin2hex(random_bytes(8));
 	}
 
-	public function getId() {
+	public function getId() : ?string {
 		return $this->id;
 	}
 
@@ -24,7 +24,7 @@ class Card implements \JsonSerializable {
     	return $this->id;
   	}
 
-    public function jsonSerialize() {
+    public function jsonSerialize() : object {
         return (object) [
         	'id' => $this->id,
         	'value' => $this->value,

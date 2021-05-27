@@ -2,8 +2,8 @@
 
 class Cards implements \ArrayAccess, \Iterator, \Countable
 {
-    protected $rows = [];
-    protected $idx = 0;
+    protected array $rows = [];
+    protected int $idx = 0;
 
     public function __construct(Card ...$var) {
 		$this->rows = (array) $var;

@@ -6,7 +6,7 @@ spl_autoload_register(function ($class) {
 });
 
 function dbg(string $msg, ...$var) : void {
-	//return;
+	return;
 	echo $msg . " : " . print_r($var, true);
 }
 

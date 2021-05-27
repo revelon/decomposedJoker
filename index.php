@@ -2,8 +2,10 @@
 
 require('./sys.php');
 
+phpinfo(); die;
+
 echo "creating game\n";
-$play = new Game();
+$play = new Game('abcd');
 
 //$play = Game::load(Game::FILENAME); dbg('whole game', $play); die('...loaded...');
 

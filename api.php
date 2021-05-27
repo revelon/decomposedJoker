@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(-1);
+ini_set('html_errors', 0);
 require('./sys.php');
 header('Content-Type: application/json');
 ob_start();
@@ -15,13 +17,13 @@ switch ($data->action) {
 		$id = '';
 		if ($data->gameId) { // play again case, with existing ID
 			$play = Game::load($data->gameId);
-			var_dump($play->status);
+			dbg('game status', $play->status);
 			if ($play && $play->status === 'finished') {
 				$id = $data->gameId;
 			}
 		}
 		while ($id === '') {
-			echo " searching for new game id... ";
+			dbg(" searching for new game id... ");
 			$id = strtoupper(bin2hex(random_bytes(2)));
 			// game exists and is younger than one day
 			if (file_exists(Game::getGameFileName($id)) && 
@@ -130,7 +132,7 @@ switch ($data->action) {
 			foreach ($grp as $c) {
 				$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 			}
-			var_dump('new set to validate', $newSet);
+			dbg('new set to validate', $newSet);
 			$g = Group::createSet($newSet);
 			if ($g) {
 				$table[] = $g;

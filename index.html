@@ -8,6 +8,9 @@
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
 		div#guiHand div div, div#guiTable div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+
+		div#guiHand div div {margin-left: -8px;} /* pokus, zmenit pak */
+
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
 		div#guiTable div.c5 div {margin-left: -4px;}
 		div#guiTable div.c6 div {margin-left: -8px;}
@@ -22,7 +25,7 @@
 		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
 		div#guiTable div img {width: 44px; height: 78px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0; user-select: none;}
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black; transform: translateY(-6px);}
+		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black; transform: translateY(-6px) !important;}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
@@ -217,7 +220,6 @@
 			window.players = {};
 			window.hand = [];
 			window.lastHandCards = {a: [], b: []};
-			window.sets = [];
 			window.table = [];
 			window.lastTableCards = {a: [], b: []};
 			window.actives = [];
@@ -304,8 +306,8 @@
 						renderGameInfo(change);
 					}
 					if (window.gameStatus === 'finished') {
-						alert('Konec hry!');
 						finishHelper();
+						alert('Konec hry!');
 					}
 				} catch (err) {
 					console.dir('err', err);
@@ -425,7 +427,6 @@
 			await getHand(true);
 			await getTable(true);
 			window.actives = [];
-			window.sets = [];
 			audioObj.play();
 		}
 
@@ -465,9 +466,6 @@
 				for(const s in window.table) {
 					newTbl.push(window.table[s]);
 				}
-				for(const s in window.sets) {
-					newTbl.push(window.sets[s]);
-				}
 				console.dir('trying to do tableChange as new table...', newTbl);
 				window.table = newTbl;
 
@@ -488,8 +486,8 @@
 				window.canModifyTable = true;
 				if (turn === "won") {
 					await getGameInfo(true);
-					alert('Hurá! Vítězství!');
 					finishHelper();
+					alert('Hurá! Vítězství!');
 				} else {
 					window.myTurn = false;
 					audioObj.play();
@@ -614,7 +612,7 @@
 		}
 
 		function addActiveCardsToSet(e, setId, toTheStart = false) {
-			console.log('method: addActiveCardsToSet', setId, toTheStart, window.actives, JSON.stringify(window.sets, null, 2), JSON.stringify(window.table, null, 2));
+			console.log('method: addActiveCardsToSet', setId, toTheStart, window.actives, JSON.stringify(window.table, null, 2));
 			if (e) {
 				e.stopPropagation();
 			}
@@ -626,12 +624,6 @@
 			try {
 				window.actives.forEach( a => {
 					window.table.forEach( (grp, idx) => {
-						if (grp.cards.includes(a) && (setId == grp.id)) {
-							console.dir('invalid!!!');
-							throw "Invalid card : set combination";
-						}
-					});
-					window.sets.forEach( (grp, idx) => {
 						if (grp.cards.includes(a) && (setId == grp.id)) {
 							console.dir('invalid!!!');
 							throw "Invalid card : set combination";
@@ -672,17 +664,6 @@
 					}
 				});
 
-				// do new sets adds and removes
-				window.sets.forEach( (grp, idx) => {
-					console.log('iterating via group', grp, idx);
-					const z = grp.cards.indexOf(a);
-					if (z > -1) {
-						window.sets[idx].cards.splice(z, 1);
-					} else if (setId === window.sets[idx].id) {
-						toTheStart ? window.sets[idx].cards.unshift(a) : window.sets[idx].cards.push(a);
-						// add sort!!
-					}
-				});
 			});
 
 			window.actives = [];
@@ -857,11 +838,11 @@
 			<li>Během hry může hráč buď <b>vzít kartu</b> nebo, pokud vyložil některé karty z ruky na stůl, chtít <b>provést změny</b> na stole.</li>
 			<li>Karty pro vytvoření nové sestavy je potřeba <b>označovat ve správném pořadí</b> zleva doprava (pokud se dokládá více karet najednou zleva, tak v opačném pořadí).</li>
 			<li>Nová sestava na stole vznikne vždy při kliknutí na stůl. Jsou-li v tu chvíli již označeny některé karty, rovnou se do ní přidají.</li>
-			<li>Dokládat označené karty k sestavám zleva nebo zprava lze kliknutím na prazdnou pozici vlevo nebo vpravo.</li>
+			<li>Dokládat označené karty k sestavám zleva nebo zprava lze kliknutím na prázdnou pozici vlevo nebo vpravo.</li>
 			<li>Probliknutí obrazovky modře signalizuje úspěch tahu aktuálního hráče, naopak probliknutí červeně signalizuje neúspěch.</li>
 			<li>Karty které jsou uskočeny směrem dolů jsou ty, které byly v minulém tahu změněny.</li>
-			<li>Pokud se hráč dostane do stavu, kdy na stole udělal změny, které se nedají dokončit nebo se nedaří zvalidovat, se může vrátit na začátek svého tahu a <b>obnovit</b> jeho počáteční stav.</li>
-			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění. Pro novou hru je potřeba stisknout <b>Ctrl+R</b></li>
+			<li>Pokud se hráč dostane do stavu, kdy na stole udělal změny, které se nedají dokončit nebo se nedaří zvalidovat, může se vrátit na začátek svého tahu a <b>obnovit</b> jeho počáteční stav.</li>
+			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění. Novou hru je po skončení předchozí možno spustit znovu, již bez potřeby zadávání kódu.</li>
 			<li>Pokud tlačítka <b>Vzít kartu</b> a <b>Provést změny</b> překáží nebo jsou na nevhodném místě, je možné je za šipku vedle nich přetáhnout na obrazovce na libovolné místo.</li>
 			<li><b>klávesa A</b> = pokud chce hráč po vyložení své první validní sestavy měnit i sestavy již na stole, obojí v jediném tahu.</li>
 			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, např. žolík a karta namísto něj, provede se jejich výměna.</li>
@@ -883,8 +864,11 @@ joker v ruce hlaska na GUI, mozna i jine
 bude historie -2 dostatecna i pro hru vice hracu? asi ne, predelat na zasobnik podle poctu hracu + 1
 kontrolovat v API konzistentne a vzdy ze je hra OK
 pridat server side logovani chyb
-zahajit hru vzetim karty
+zahajit hru vzetim karty?
 vsechny zmeny, nejen nove karty na stole!!
 translate meni z-index a karty se prekryvaji divne
 nejsou uz window.sets na zruseni ?
+nefungujici pocitadlo
+doladit dalsi start hry
+opravit vsechny php hinty
 -->
