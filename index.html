@@ -327,7 +327,7 @@
 					return;
 				}
 				if (!window.tick) {
-					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1500);
+					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 2000);
 				} else {
 					//window.clearInterval(window.tick);
 				}
@@ -871,4 +871,5 @@ nejsou uz window.sets na zruseni ?
 nefungujici pocitadlo
 doladit dalsi start hry
 opravit vsechny php hinty
+pridat nahodny GC na promazavani starych her
 -->

@@ -5,9 +5,10 @@ spl_autoload_register(function ($class) {
     include 'classes/' . $class . '.class.php';
 });
 
+$dbgBuffer = '';
 function dbg(string $msg, ...$var) : void {
 	return;
-	echo $msg . " : " . print_r($var, true);
+	$GLOBALS['dbgBuffer'] .= $msg . " : " . print_r($var, true);
 }
 
 function asserts(string $desc, $expr, bool $expectedResult) : void {
@@ -18,3 +19,6 @@ function asserts(string $desc, $expr, bool $expectedResult) : void {
 	}
 }
 
+function mylog(string $msg) {
+	file_put_contents('./my.log', date("Y-m-d H:i:s") ." (". round(microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"], 2) . ") #". REQID ."# ". $msg ."\n", FILE_APPEND);
+}
