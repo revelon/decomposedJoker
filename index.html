@@ -41,7 +41,6 @@
 		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 1.8em;}
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
-		/*div#guiTable {column-count: 2;}*/
 		div#guiTable > div {margin-bottom: 8px; width: 49.5%; float: right;}
 		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#help {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double DarkMaroon; display: none; overflow: scroll;}
@@ -86,6 +85,9 @@
 		var guiPlayers;
 		var guiActions;
 		var audioObj = new Audio('cardflip.mp3');
+		var audioTick = new Audio('playcard1.mp3');
+		var audioChange = new Audio('taketrick.mp3');
+		var audioWrong = new Audio('turntoplay.mp3');
 
 		window.addEventListener('load', (event) => {
 			console.log('method: document loaded...');
@@ -699,6 +701,7 @@
 			window.actives = [];
 			renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 			renderCardGroups(window.table, window.guiTable, window.lastTableCards, window.canModifyTable);
+			audioChange.play();
 		}
 
 		function renderCard(id) {
@@ -712,7 +715,7 @@
 		function renderGameInfo(refresh) {
 			window.guiPlayers.innerHTML = '';
 			for(const p in window.players) {
-				let plr = el('div', null, `${window.players[p].name} (${window.players[p].cards} cards)`);
+				let plr = el('div', null, `${window.players[p].name} (${window.players[p].cards} karet)`);
 				plr.classList.add(window.players[p].status);
 				guiPlayers.append(plr);
 			}
@@ -731,7 +734,7 @@
 			e.stopPropagation();
 			if (window.gameStatus !== 'playing' || !window.myTurn) {
 				return;
-			}			
+			}
 			const x = window.actives.indexOf(id);
 			if (x > -1) {
 				window.actives.splice(x, 1);
@@ -739,7 +742,7 @@
 				window.actives.push(id)	
 			}
 			document.getElementById(id).classList.toggle("active");
-			event.stopPropagation();
+			audioTick.play();
 		}
 
 		function el(element, id = null, htmlBody = '') {
@@ -767,6 +770,7 @@
 					{ background: 'DarkRed' },
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' }
 				], 1000);
+			audioWrong.play();
 		}
 
 		function showFinish() {
@@ -866,16 +870,16 @@
 			<li>Jakmile je hra založena a registrován alespoň jeden hráč, je možno hru <b>zahájit</b>.</li>
 			<li>Na tahu je vždy právě jeden hráč (ukazatel vlevo dole) a ostatní hráči nemají v té chvíli možnost provádět žádné akce.</li>
 			<li>Během hry může hráč buď <b>vzít kartu</b> nebo, pokud vyložil některé karty z ruky na stůl, chtít <b>provést změny</b> na stole.</li>
-			<li>Karty pro vytvoření nové sestavy je potřeba <b>označovat ve správném pořadí</b> zleva doprava (pokud se dokládá více karet najednou zleva, tak v opačném pořadí).</li>
-			<li>Nová sestava na stole vznikne vždy při kliknutí na stůl. Jsou-li v tu chvíli již označeny některé karty, rovnou se do ní přidají.</li>
-			<li>Dokládat označené karty k sestavám zleva nebo zprava lze kliknutím na prázdnou pozici vlevo nebo vpravo.</li>
+			<li>Karty pro vytvoření nové sestavy je potřeba <b>označovat ve správném pořadí</b> zleva doprava (pokud se dokládá více karet najednou zleva k již existující sestavě, tak v opačném pořadí).</li>
+			<li>Nová sestava na stole vznikne vždy při kliknutí na prázdné místo na stole. Jsou-li v tu chvíli již <b>označeny</b> některé karty, rovnou se do ní <b>přidají</b>.</li>
+			<li><b>Dokládat</b> označené karty k sestavám zleva nebo zprava lze <b>kliknutím na prázdnou pozici</b> vlevo nebo vpravo.</li>
 			<li>Probliknutí obrazovky modře signalizuje úspěch tahu aktuálního hráče, naopak probliknutí červeně signalizuje neúspěch.</li>
-			<li>Karty které jsou uskočeny směrem dolů jsou ty, které byly v minulém tahu změněny.</li>
+			<li>Karty které jsou <b>uskočeny směrem dolů</b> jsou ty, které byly nedávno <b>změněny</b>.</li>
 			<li>Pokud se hráč dostane do stavu, kdy na stole udělal změny, které se nedají dokončit nebo se nedaří zvalidovat, může se vrátit na začátek svého tahu a <b>obnovit</b> jeho počáteční stav.</li>
 			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění. Novou hru je po skončení předchozí možno spustit znovu, již bez potřeby zadávání kódu.</li>
-			<li>Pokud tlačítka <b>Vzít kartu</b> a <b>Provést změny</b> překáží nebo jsou na nevhodném místě, je možné je za šipku vedle nich přetáhnout na obrazovce na libovolné místo.</li>
-			<li><b>klávesa A</b> = pokud chce hráč po vyložení své první validní sestavy měnit i sestavy již na stole, obojí v jediném tahu.</li>
-			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, např. žolík a karta namísto něj, provede se jejich výměna.</li>
+			<li>Pokud tlačítka <b>Vzít kartu</b> a <b>Provést změny</b> překáží nebo jsou na nevhodném místě, je možné je za šipku vedle nich <b>přetáhnout</b> na obrazovce na libovolné místo.</li>
+			<li><b>klávesa A</b> = pokud chce hráč po vyložení své první validní sestavy měnit i sestavy již vyložené jinými hráči na stole, obojí v jediném tahu.</li>
+			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, např. žolík a karta namísto něj v sestavě na stole, provede se jejich výměna.</li>
 		</ul>
 	</div>
 
@@ -884,19 +888,14 @@
 
 <!--
 vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve); da se podvadet preskladanim do nove groupy !!
-lepe vyresit konec hry, omezit statusy?
-umoznit na konci jeste dolozit sve karty_
+lepe vyresit konec hry, omezit statusy
+umoznit na konci jeste dolozit sve karty
 4 z druhu jdou rozebrat i kdyz neni nahrada za jokera
 vubec neposilat na validaci sestavy kratsi 3 karet
-joker v ruce hlaska na GUI, mozna i jine
-bude historie -2 dostatecna i pro hru vice hracu? asi ne, predelat na zasobnik podle poctu hracu + 1
+joker v ruce hlaska na GUI, mozna i jine hlasky zobrazovat, co se stalo...
 kontrolovat v API konzistentne a vzdy ze je hra OK
 pridat server side logovani chyb
 zahajit hru vzetim karty?
-vsechny zmeny, nejen nove karty na stole!!
 doladit dalsi start hry, ted je dost rozbity
-opravit vsechny php hinty
 pridat nahodny GC na promazavani starych her
-rozbita hra jednoho hrace
-lepsi zvuky
 -->
