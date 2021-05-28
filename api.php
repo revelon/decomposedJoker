@@ -93,7 +93,7 @@ switch ($data->action) {
 			$play = Game::load($data->gameId);
 			echo json_encode( [ 'data' => [ 'players' => $play->getPlayersInfo(), 'gameStatus' => $play->status , 
 				'amIActivePlayer' => ($play->getActivePlayerId() && $play->getActivePlayerId() === $data->playerId),
-				'lastModifiedAt' => $changedAt, 'turns' => $play->turns], 'dbg' => $dbgBuffer ] );
+				'lastModifiedAt' => $changedAt, 'turns' => $play->turns, 'allPlayersHands' => $play->getAllPlayersHands()], 'dbg' => $dbgBuffer ] );
 		} else {
 			http_response_code(304);
 		}

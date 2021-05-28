@@ -137,10 +137,11 @@ class Game {
 
 		$this->table = $newTable;
 		$this->players[$this->activePlayer]->setNewHand($newHand);
-		$this->players[$this->activePlayer]->canAddCards = true; // allow player to add cards, after finishing his first set
+		$this->players[$this->activePlayer]->canAddCards = true; // allow player to add cards, after finishing his first valid set on the table
 
 		// end of the game or next players turn
 		if (sizeOf($newHand) === 0 || $newHand->areOnlyJokersPresent()) {
+			$this->nextPlayerTurn();
 			$this->gameOver($id);
 		} else {
 			$this->nextPlayerTurn();
@@ -181,6 +182,16 @@ class Game {
 		dbg("Player " . $this->players[$id]->getName() . " wins!!!!");
 	}
 
+	public function getAllPlayersHands() : array {
+		$ret = [];
+		if ($this->status === 'finished') {
+			foreach($this->players as $player) {
+				$ret[$player->getName()] = $player->getHand()->getCardIds();
+			}
+		}
+		return $ret;
+	}
+
 	public function save() : bool {
 		$me = file_put_contents($this->id, serialize($this));
 		dbg('saving', $me);
@@ -206,16 +217,6 @@ class Game {
 	private function createDeck() : Cards {
 		$deck = new Cards(
 			new Card(0, Card::WILD),
-			new Card(0,	Card::WILD),
-			new Card(0,	Card::WILD),
-			new Card(0,	Card::WILD),
-
-			new Card(0, Card::WILD),  // boost some extra jokers, for more fun, remove later !!!!
-			new Card(0,	Card::WILD),
-			new Card(0,	Card::WILD),
-			new Card(0,	Card::WILD),
-
-			new Card(0, Card::WILD),  // boost some extra jokers, for more fun, remove later !!!!
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),

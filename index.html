@@ -7,7 +7,7 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiTable div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
 		div div.active {filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; transform: translateY(-7px) !important;}
@@ -43,16 +43,16 @@
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
 		div#guiTable > div {margin-bottom: 8px; width: 49.5%; float: right;}
 		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
-		div#help {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double DarkMaroon; display: none; overflow: scroll;}
+		div#help, div#gameOver {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
-		div#help.visible {display: block;}
-		div#help button {float: right;}
-		div#turns {font-size: 0.8em; position: fixed; left: 1%; top: 1%; color: White;}
+		div#help.visible, div#gameOver.visible {display: block; opacity: 0.9;}
+		div#help button, div#gameOver button {float: right;}
+		div#turns {font-size: 0.85em; position: fixed; left: 0.85%; top: 1%; color: White;}
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px; cursor: pointer;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
-		h6 {font-style: italic; font-size: 1.1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -4px 0 0 -2px;}
+		h6 {font-style: italic; font-size: 1.1em; opacity: 0.7; font-weight: lighter; padding: 0; margin: -17px 0 0 -2px;}
 		/* main layout */
 		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(4, [row] auto ); width: 100vw; height: 100vh;}
 		.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
@@ -158,6 +158,7 @@
 					window.actives = [];
 					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 					renderCardGroups(window.table, window.guiTable, window.lastTableCards);
+					audioChange.play();
 				}
 			}
 			if (e.code == 'KeyA') {
@@ -176,6 +177,7 @@
 			try {
 				window.gameId = await postData({ action: 'initGame' , 'gameId': window.gameId });
 				const deck = await postData({ action: 'getGameCards', 'gameId': window.gameId });
+				await initHelperReset();
 				deck.forEach(c => window.allCards[c.id] = c);
 				initHelper();
 			} catch (err) {
@@ -189,7 +191,7 @@
 			if (!str) {
 				return;
 			}
-
+			await initHelperReset();
 			try {
 				const deck = await postData({ action: 'getGameCards', 'gameId': str });
 				deck.forEach(c => window.allCards[c.id] = c);
@@ -201,10 +203,28 @@
 			}
 		}
 
-		function initHelper() {
-			console.log('method: initHeper');
+		async function initHelperReset() {
+			console.log('method: initHelperReset');
 
+			window.allCards = {}; // all current game cards in the full deck
+			window.playerId = ''; // current player secret identifier
+			//window.gameId = ''; // current game ID
+			window.canModifyTable = false; // flag, if user already made one full set and can add cards to other sets
+			window.players = {}; // all players involved in current game
 			window.hand[0] = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
+			window.lastHandCards = {a: [], b: [], c: []}; // previous player's cards in hand history, last change + c = reset
+			window.sets = []; // preparing, unfinished, unvalidated, new sets of cards (client side only)
+			window.table = []; // playing table with validated sets of cards (server side)
+			window.lastTableCards = {a: [], b: []}; // previous table's cards history, last two changes
+			window.actives = []; // stack of currently selected cards (to create new set or append to existing one)
+			window.gameStatus = 'inactive'; // current game status: inactive | playing | finished
+			window.myTurn = false; // flag if it is this player's turn or not
+			window.tick = null; // holder for refresing/ticking setInterval object
+			window.lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
+		}
+
+		function initHelper() {
+			console.log('method: initHelper');
 
 			document.getElementById('guiGameInit').setAttribute('disabled', true);
 			document.getElementById('guiGameJoin').setAttribute('disabled', true);
@@ -212,32 +232,6 @@
 			document.getElementById('gameIndicator').innerText = 'Kód hry: '+ window.gameId;
 			renderCardGroups(window.table, window.guiTable, window.lastTableCards);
 			startAutoRefresh();
-		}
-
-		function finishHelper() {
-			console.log('method: finishHeper');
-
-			window.allCards = {};
-			window.playerId = '';
-			window.canModifyTable = false;
-			window.players = {};
-			window.hand = [];
-			window.lastHandCards = {a: [], b: [], c: []};
-			window.table = [];
-			window.lastTableCards = {a: [], b: []};
-			window.actives = [];
-			window.gameStatus = 'inactive';
-			window.myTurn = false;
-			window.lastModifiedAt = 0;
-			var guiHand;
-			var guiTable;
-			var guiPlayers;
-			var guiActions;
-
-			document.getElementById('guiGameInit').removeAttribute('disabled');
-			document.getElementById('guiGameJoin').removeAttribute('disabled');
-			document.getElementById('guiRegPlayer').setAttribute('disabled', true);
-			document.getElementById('guiUndoRefresh').setAttribute('disabled', true);
 		}
 
 		async function registerPlayer() {
@@ -278,6 +272,7 @@
 					document.getElementById('guiGameStart').setAttribute('disabled', true);
 					document.getElementById('guiTurnGetCard').removeAttribute('disabled');
 					document.getElementById('guiTurnChangeTable').removeAttribute('disabled');
+					document.getElementById('guiUndoRefresh').removeAttribute('disabled');
 				} else {
 					throw 'Setting player as active failed';
 				}
@@ -292,6 +287,7 @@
 			if (!window.myTurn && !document.hidden) {
 				document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
 				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
+				document.getElementById('guiUndoRefresh').setAttribute('disabled', true);
 				try {
 					const p = await postData({ action: 'getGameInfo', 'gameId': window.gameId, 'playerId': window.playerId, 'knownStateFrom': window.lastModifiedAt });
 					console.dir('returned server info', JSON.stringify(p, null, 2));
@@ -309,10 +305,30 @@
 					}
 					if (window.gameStatus === 'finished') {
 						await getGameInfo(true);
-						startAutoRefresh(true);
 						showFinish();
-						alert('Konec hry!');
-						finishHelper();
+						startAutoRefresh(true);
+
+						let results = document.getElementById('results');
+						for (let i in p.allPlayersHands) {
+							let set = {};
+							set.id = 0;
+							set.new = true;
+							set.controls = false;
+							set.cards = p.allPlayersHands[i].slice();
+							results.append(el('h4', null, i));
+							let holder = el('div');
+							renderCardGroups([set], holder, {a: [], b: [], c: []});
+							results.append(holder);
+							results.append(el('hr'));
+						}
+
+						document.getElementById('guiGameInit').removeAttribute('disabled');
+						document.getElementById('guiGameJoin').removeAttribute('disabled');
+						document.getElementById('guiRegPlayer').setAttribute('disabled', true);
+						document.getElementById('gameOver').classList.toggle('visible');
+						document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
+						document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
+						document.getElementById('guiUndoRefresh').setAttribute('disabled', true);
 					}
 				} catch (err) {
 					console.dir('err', err);
@@ -320,6 +336,7 @@
 			} else {
 				document.getElementById('guiTurnGetCard').removeAttribute('disabled');
 				document.getElementById('guiTurnChangeTable').removeAttribute('disabled');
+				document.getElementById('guiUndoRefresh').removeAttribute('disabled');
 			}
 		}
 
@@ -493,25 +510,17 @@
 				const turn = await postData({ action: 'doTableChange', 'gameId': window.gameId, 'playerId': window.playerId, 'table': fullTable, 'hand': handCards });
 				console.dir('doTableChange ended as', turn);
 				window.canModifyTable = true;
-				if (turn === "won") {
-					await getGameInfo(true);
-					startAutoRefresh(true);
-					showFinish();
-					alert('Hurá! Vítězství!');
-					finishHelper();
-				} else {
-					// try to push history forward
-					window.lastTableCards.b = window.lastTableCards.a.slice();
-					window.lastTableCards.a = [];
-					window.table.forEach( grp => {
-						grp.cards.forEach( c => {
-							window.lastTableCards.a.push(grp.id + "_" + c);
-						});
+				// always push history forward
+				window.lastTableCards.b = window.lastTableCards.a.slice();
+				window.lastTableCards.a = [];
+				window.table.forEach( grp => {
+					grp.cards.forEach( c => {
+						window.lastTableCards.a.push(grp.id + "_" + c);
 					});
+				});
 
-					window.myTurn = false;
-					audioObj.play();
-				}
+				window.myTurn = false;
+				audioObj.play();
 			} catch (err) {
 				console.dir('err', err);
 				showFailure();
@@ -777,9 +786,9 @@
 			document.getElementById("html").animate(
 				[
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' },
-					{ background: 'White' },
+					{ background: 'Orange' },
 					{ background: 'radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%)' }
-				], {duration: 1000, iterations: 3});
+				], {duration: 1500, iterations: 3});
 		}
 
 		function dummyClick(e) {
@@ -883,19 +892,24 @@
 		</ul>
 	</div>
 
+	<div id="gameOver">
+		<button onclick='document.getElementById("gameOver").classList.toggle("visible")'>X</button>
+		<h1>!! Konec hry !!</h1>
+		<nr>
+		<div id="results"></div>
+	</div>
+
 </body>
 </html>
 
 <!--
 vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve); da se podvadet preskladanim do nove groupy !!
-lepe vyresit konec hry, omezit statusy
-umoznit na konci jeste dolozit sve karty
-4 z druhu jdou rozebrat i kdyz neni nahrada za jokera
+4 z druhu jdou rozebrat i kdyz neni nahrada za jokera - podvadeni
 vubec neposilat na validaci sestavy kratsi 3 karet
 joker v ruce hlaska na GUI, mozna i jine hlasky zobrazovat, co se stalo...
 kontrolovat v API konzistentne a vzdy ze je hra OK
 pridat server side logovani chyb
 zahajit hru vzetim karty?
-doladit dalsi start hry, ted je dost rozbity
 pridat nahodny GC na promazavani starych her
+zajistit i reset canModifyTable po resetu - podvadeni
 -->
