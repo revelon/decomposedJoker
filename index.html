@@ -7,23 +7,28 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiTable div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; border: 1px solid Black; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div#guiHand div div, div#guiTable div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div div.normal {border: 1px solid Black; transform: translateY(0);}
+		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
+		div div.active {filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; transform: translateY(-7px) !important;}
+		div div.changed {transform: translateY(7px) !important; filter: drop-shadow(-3px 3px 1px Black);}
 
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
-		div#guiTable div.c5 div {margin-left: -4px;}
-		div#guiTable div.c6 div {margin-left: -8px;}
-		div#guiTable div.c7 div {margin-left: -12px;}
-		div#guiTable div.c8 div {margin-left: -15px;}
-		div#guiTable div.c9 div {margin-left: -15px; width: 32px;}
-		div#guiTable div.c10 div {margin-left: -15px; width: 32px;}
-		div#guiTable div.c11 div {margin-left: -18px; width: 32px;}
-		div#guiTable div.c12 div {margin-left: -18px; width: 29px;}
-		div#guiTable div.c13 div {margin-left: -18px; width: 29px;}
-		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
-		div#guiTable div.c14 div {margin-left: -18px; width: 29px;}
-		div#guiTable div img {width: 44px; height: 78px; display: inline-block; vertical-align: top; padding: 2px; margin-right: 0; user-select: none;}
-		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
-		div.active {border: 2px solid DarkGreen; filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; color: Black; transform: translateY(-7px) !important;}
+		div#guiTable div.c6 div {margin-left: -4px;}
+		div#guiTable div.c7 div {margin-left: -7px;}
+		div#guiTable div.c8 div {margin-left: -10px;}
+		div#guiTable div.c9 div {margin-left: -10px; width: 32px;}
+		div#guiTable div.c10 div {margin-left: -13px; width: 32px;}
+		div#guiTable div.c11 div {margin-left: -16px; width: 32px;}
+		div#guiTable div.c12 div {margin-left: -16px; width: 32px;}
+		div#guiTable div.c13 div {margin-left: -16px; width: 32px;}
+		div#guiTable div.c14 div {margin-left: -16px; width: 32px;}
+		div#guiTable div.c15 div {margin-left: -16px; width: 32px;}
+		div#guiTable div.c16 div {margin-left: -16px; width: 32px;}
+		div#guiTable div.c17 div {margin-left: -16px; width: 32px;}
+
+		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; opacity: .8;}
+		div#guiPlayers > div.active {transform: translateY(0) !important; color: Black; opacity: 1;}
 		div.spades {background-color: White; color: Black;} 
 		div.clubs {background-color: MistyRose; color: Black;}
 		div.hearts {background-color: Cornsilk; color: Red;}
@@ -35,10 +40,10 @@
 		div > p:nth-of-type(3) {text-align: right;}
 		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 1.8em;}
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
-		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
-		div#guiTable {column-count: 2;}
-		div#guiTable div {margin-bottom: 8px;}
-		div.menu button {width: 100%; padding: 4px;}
+		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
+		/*div#guiTable {column-count: 2;}*/
+		div#guiTable > div {margin-bottom: 8px; width: 49.5%; float: right;}
+		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#help {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double DarkMaroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
 		div#help.visible {display: block;}
@@ -47,7 +52,6 @@
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px; cursor: pointer;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
-		div div.changed {transform: translateY(7px); filter: drop-shadow(-3px 3px 1px Black);}
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.5; font-weight: lighter; padding: 0; margin: -4px 0 0 -2px;}
 		/* main layout */
@@ -203,7 +207,7 @@
 			document.getElementById('guiGameInit').setAttribute('disabled', true);
 			document.getElementById('guiGameJoin').setAttribute('disabled', true);
 			document.getElementById('guiRegPlayer').removeAttribute('disabled');
-			document.getElementById('gameIndicator').innerText = 'Hra: '+ window.gameId;
+			document.getElementById('gameIndicator').innerText = 'Kód hry: '+ window.gameId;
 			renderCardGroups(window.table, window.guiTable, window.lastTableCards);
 			startAutoRefresh();
 		}
@@ -582,14 +586,18 @@
 					}
 					// mark cards new from two previous known states, but not new sets
 					if (groups[s].id != 0) { // not hand, table has indexes with group prefixes
-						if (!groups[s].new && (!previousIds.a.includes(groups[s].id + "_" + c) || !previousIds.b.includes(groups[s].id + "_" + c))) {
+						if (!groups[s].new && (!previousIds.a.includes(groups[s].id + "_" + c) /*|| !previousIds.b.includes(groups[s].id + "_" + c)*/)) {
 							card.classList.add('changed');
 							console.dir('adding changed class to table card id', c);
+						} else {
+							card.classList.add('normal');
 						}
 					} else { // hand
 						if (!groups[s].new && (!previousIds.a.includes(c) || !previousIds.b.includes(c))) {
 							card.classList.add('changed');
 							console.dir('adding changed class to hand card id', c);
+						} else {
+							card.classList.add('normal');
 						}
 					}
 					nl.append(card);
@@ -599,31 +607,31 @@
 				if (!groups[s].cards.length && groups[s].id !== 0) {
 					console.log('rendering set as empty group');
 					for (let a = 0; a < 3; a++) {
-						let crd = el('img');
-						crd.src = 'space.svg';
-						nl.append(crd);
+						const wrapper = el('div');
+						wrapper.classList.add('empty');
+						nl.append(wrapper);
 					}
 				}
 
 				if (groups[s].id != 0) { // not for hand
  					if (groups[s].cards.length) {
-						const butt0 = el('img', "act0-" + groups[s].id);
-						butt0.src = 'space.svg';
+						const wrapper0 = el('div');
+						wrapper0.classList.add('empty');
 						if (groups[s].controls) {
-							butt0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
+							wrapper0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
 						} else {
-							butt0.addEventListener('click', (e) => dummyClick(e), true);
+							wrapper0.addEventListener('click', (e) => dummyClick(e), true);
 						}
-						nl.prepend(butt0);
+						nl.prepend(wrapper0);
 
-						const butt = el('img', "act-" + groups[s].id);
-						butt.src = 'space.svg';
+						const wrapper = el('div');
+						wrapper.classList.add('empty');
 						if (groups[s].controls) {
-							butt.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
+							wrapper.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
 						} else {
-							butt.addEventListener('click', (e) => dummyClick(e), true);
+							wrapper.addEventListener('click', (e) => dummyClick(e), true);
 						}
-						nl.append(butt);
+						nl.append(wrapper);
 					} else {
 						nl.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
 					}
@@ -822,7 +830,7 @@
 			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Zahájit hru</button>
 			<button onclick='getServerState(true)' id='guiUndoRefresh' disabled>&#8634; Obnovit (Zpět)</button>
 			<button onclick='document.getElementById("help").classList.toggle("visible")'>? Nápověda</button>
-			<hr>
+			
 			<h3 id="gameIndicator"></h3>
 			<h3 id="indicator"></h3>
 		</div>
@@ -877,10 +885,8 @@
 <!--
 vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve); da se podvadet preskladanim do nove groupy !!
 lepe vyresit konec hry, omezit statusy?
-umoznit na konci jeste dolozit sve karty
-nepreblikavat 2x provedenou zmenu (zkusit)
+umoznit na konci jeste dolozit sve karty_
 4 z druhu jdou rozebrat i kdyz neni nahrada za jokera
-zkusit drzet ID sestav persistentne?
 vubec neposilat na validaci sestavy kratsi 3 karet
 joker v ruce hlaska na GUI, mozna i jine
 bude historie -2 dostatecna i pro hru vice hracu? asi ne, predelat na zasobnik podle poctu hracu + 1
@@ -888,10 +894,9 @@ kontrolovat v API konzistentne a vzdy ze je hra OK
 pridat server side logovani chyb
 zahajit hru vzetim karty?
 vsechny zmeny, nejen nove karty na stole!!
-translate meni z-index a karty se prekryvaji divne
-nejsou uz window.sets na zruseni ?
-nefungujici pocitadlo
 doladit dalsi start hry, ted je dost rozbity
 opravit vsechny php hinty
 pridat nahodny GC na promazavani starych her
+rozbita hra jednoho hrace
+lepsi zvuky
 -->
