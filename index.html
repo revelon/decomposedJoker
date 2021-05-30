@@ -41,7 +41,7 @@
 		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 1.8em;}
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
-		div#guiTable > div {margin-bottom: 8px; width: 49.5%; float: right;}
+		div#guiTable > div {margin-top: 12px; display: inline-block; margin-left: 12px;}
 		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#help, div#gameOver {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
@@ -169,6 +169,19 @@
 				if (document.getElementById('help').classList.contains('visible')) {
 					document.getElementById('help').classList.toggle('visible');
 				}
+				if (document.getElementById('gameOver').classList.contains('visible')) {
+					document.getElementById('gameOver').classList.toggle('visible');
+				}
+			}
+			if (e.code == 'Space') {
+				if (!document.getElementById('guiTurnGetCard').hasAttribute('disabled')) {
+					getCard();
+				}
+			}
+			if (e.code == 'Enter') {
+				if (!document.getElementById('guiTurnChangeTable').hasAttribute('disabled')) {
+					doTableChange();
+				}
 			}
 		}
 
@@ -221,6 +234,7 @@
 			window.myTurn = false; // flag if it is this player's turn or not
 			window.tick = null; // holder for refresing/ticking setInterval object
 			window.lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
+			document.getElementById('results').innerHTML = ''; // reset game history
 		}
 
 		function initHelper() {
@@ -261,6 +275,7 @@
 				console.dir('err', err);
 				showFailure();
 			}
+			guiHand.focus();
 		}
 
 		async function startGame() {
@@ -280,6 +295,7 @@
 				console.dir('err', err);
 				showFailure();
 			}
+			guiHand.focus();
 		}
 
 		async function getGameInfo(render = false) {
@@ -349,7 +365,7 @@
 					return;
 				}
 				if (!window.tick) {
-					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 1000);
+					window.tick = window.setInterval( async () => { await getGameInfo(true); }, 800);
 				} else {
 					//window.clearInterval(window.tick);
 				}
@@ -648,7 +664,7 @@
 					}
 				}
 
-				gui.append(nl);
+				gui.prepend(nl);
 			}
 		}
 
@@ -889,6 +905,8 @@
 			<li>Pokud tlačítka <b>Vzít kartu</b> a <b>Provést změny</b> překáží nebo jsou na nevhodném místě, je možné je za šipku vedle nich <b>přetáhnout</b> na obrazovce na libovolné místo.</li>
 			<li><b>klávesa A</b> = pokud chce hráč po vyložení své první validní sestavy měnit i sestavy již vyložené jinými hráči na stole, obojí v jediném tahu.</li>
 			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, např. žolík a karta namísto něj v sestavě na stole, provede se jejich výměna.</li>
+			<li><b>klávesa Mezerník</b> = alternativní zkratka pro <b>Vzít si další kartu</b></li>
+			<li><b>klávesa Enter</b> = alternativní zkratka pro potvrzení <b>Provedení změn</b> na stole</li>
 		</ul>
 	</div>
 
@@ -912,4 +930,12 @@ pridat server side logovani chyb
 zahajit hru vzetim karty?
 pridat nahodny GC na promazavani starych her
 zajistit i reset canModifyTable po resetu - podvadeni
+dynamicka delka sestav
+reset results pridat pri nove hre - je to historie?
+esc na zavreni konce hry
+resetovat actives ?
+kupicku karet na brani? budik z recepce na dalsi tah
+obcas neni sestava na stole aktivni, ac by byt mela
+vyjimka na historii pro jednoho hrace at se nepta na historii 2 karet v ruce
+nabidnout vice variant hry
 -->

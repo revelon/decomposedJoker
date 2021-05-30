@@ -58,7 +58,7 @@ class Group extends Cards {
 			$prev = $values[$i-1];
 			$curr = $values[$i];
 
-			dbg('iteration details', $values, $i, $prev, $curr);
+			dbg('iteration details', $values, 'i', $i, 'prev', $prev, 'curr', $curr);
 
 			// two following jokers are never allowed
 			if ($prev === 0 && $curr === 0) {
@@ -68,6 +68,11 @@ class Group extends Cards {
 			// standard increase is always ok
 			if ($prev+1 === $curr) {
 				continue;
+			}
+
+			// solve joker between king and ace invalid case
+			if ($prev === 13 && $curr === 0 && isset($values[$i+1]) && $values[$i+1] === 1) {
+				return false;
 			}
 
 			// joker combination is valid if line is starting only
@@ -102,7 +107,6 @@ class Group extends Cards {
 	}	
 
 	public static function tests() : void {
-
 		asserts("Not enough cards", 
 				Group::validate(new Cards( new Card(1, Card::SPADES), new Card(3, Card::SPADES) )), 
 				false);
@@ -175,7 +179,9 @@ class Group extends Cards {
 		asserts("Invalid row of three with two jokers", 
 				Group::validate(new Cards( new Card(0, Card::WILD), new Card(11, Card::SPADES), new Card(0, Card::WILD) )),
 				false);
-
+		asserts("Invalid row over ace rewing and joker", 
+				Group::validate(new Cards( new Card(13, Card::CLUBS), new Card(0, Card::WILD), new Card(1, Card::CLUBS) )),
+				false);
 	}
 
 }

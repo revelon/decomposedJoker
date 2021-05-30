@@ -7,7 +7,7 @@ spl_autoload_register(function ($class) {
 
 $dbgBuffer = '';
 function dbg(string $msg, ...$var) : void {
-	return;
+	//return;
 	$GLOBALS['dbgBuffer'] .= $msg . " : " . print_r($var, true);
 }
 

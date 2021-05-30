@@ -2,8 +2,9 @@
 
 require('./sys.php');
 
-phpinfo(); die;
+//phpinfo(); die;
 
+/*
 echo "creating game\n";
 $play = new Game('abcd');
 
@@ -15,7 +16,9 @@ $play->setActivePlayer($pid);
 
 //var_dump($play->getPlayerCopy($pid)->getHand()); die("ughhh");
 
-Group::tests(); die;
+*/
+
+Group::tests(); die($dbgBuffer);
 
 // make very big hand
 for ($i = 0; $i < 103; $i++) {
