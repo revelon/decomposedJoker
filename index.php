@@ -4,12 +4,14 @@ require('./sys.php');
 
 //phpinfo(); die;
 
-/*
+
 echo "creating game\n";
 $play = new Game('abcd');
+$play->startNewGame();
 
 //$play = Game::load(Game::FILENAME); dbg('whole game', $play); die('...loaded...');
 
+/*
 $play->startNewGame();
 $pid = $play->assignPlayer('marek');
 $play->setActivePlayer($pid);
@@ -18,7 +20,37 @@ $play->setActivePlayer($pid);
 
 */
 
-Group::tests(); die($dbgBuffer);
+//predelat to na ukladani ID konkretnich karet z Decku, ktere pripadaji v uvahu pro nahradu, bude to pak asi jednodussi !!
+
+//new Cards(new Card(1, Card::SPADES), new Card(2, Card::SPADES), new Card(3, Card::SPADES));
+
+$newSet = Group::createSet(
+	new Cards(new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES)), 
+	'dummy' );
+
+$newSet = Group::createSet(
+	new Cards(new Card(0, Card::WILD), new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES)), 
+	'dummy' );
+/*
+$newSet = Group::createSet(
+	new Cards(new Card(0, Card::WILD), new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES)), 
+	'dummy' );
+
+$newSet = Group::createSet(
+	new Cards(new Card(12, Card::SPADES), new Card(0, Card::WILD), new Card(1, Card::SPADES)), 
+	'dummy' );
+
+$newSet = Group::createSet(
+	new Cards(new Card(12, Card::SPADES), new Card(0, Card::WILD), new Card(12, Card::HEARTS)), 
+	'dummy' );
+*/
+
+
+$newSet->fillJokerReplacements($play->getDeck());
+var_dump($newSet); die();
+
+//Group::tests(); 
+die($dbgBuffer);
 
 // make very big hand
 for ($i = 0; $i < 103; $i++) {

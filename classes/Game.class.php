@@ -135,6 +135,73 @@ class Game {
 			return false;
 		}
 
+		// !!!!!
+		// funguje blbe uz pridelovani ID z decku, protoze uz mohou byt rozdany v ruce!!! !!!!!
+		var_dump($this->table);die;
+		// projit stary stul, vytahnout vsechny nahrady jokeru a pokud neco z toho nesedi v novem, kricet!!
+		foreach ($this->table as $set) {
+			if (sizeOf($set->sameTypeJokerReplacements)) { // there were some jokers in previous set
+				$jokers = $set->getCardsByType(Card::WILD, 0); // get them
+				foreach ($newTable as $newSet) {
+					if ($set->id === $newSet->id) { // find if the set still exists on new table
+						foreach ($jokers as $j) { // check presence of the same previous jokers by id
+							if (!in_array($j->getId(), $newSet->getCardIds())) {
+								// and if not there, try to find its replacements elsewhere on the new table
+								if (sizeOf($set->sameTypeJokerReplacements) === 1) {
+									// only one card mising from four of the type
+									if ($newTable->isCardPresent($set->sameTypeJokerReplacements[0][0]->getId()) || 
+									$newTable->isCardPresent($set->sameTypeJokerReplacements[0][1]->getId())) {
+										// success
+									} else {
+										dbg("card replacing joker from set of four of the type was not found on the new table A");
+										return false;
+									}
+								} else if (sizeOf($set->sameTypeJokerReplacements) === 2) {
+									// two cards mising from four of the type
+									if (($newTable->isCardPresent($set->sameTypeJokerReplacements[0][0]->getId()) || 
+									$newTable->isCardPresent($set->sameTypeJokerReplacements[0][1]->getId())) && 
+									($newTable->isCardPresent($set->sameTypeJokerReplacements[1][0]->getId()) || 
+									$newTable->isCardPresent($set->sameTypeJokerReplacements[1][1]->getId()))) {
+										// success
+									} else {
+										dbg("card replacing joker from set of four of the type was not found on the new table B");
+										return false;
+									}
+								}
+							}
+						}
+					}
+				}
+			} else if (sizeOf($set->lineJokerReplacements)) { // there were some jokers in previous set II
+				// TBD implement and beware which joker you are solving
+				$jokers = $set->getCardsByType(Card::WILD, 0); // get them all
+
+				if (sizeOf($jokers) > 1) die('NOT IMPLEMENTED CASE! FIX ME!'); // !!!!
+
+				foreach ($newTable as $newSet) {
+					if ($set->id === $newSet->id) { // find if the set still exists on new table
+						foreach ($jokers as $j) { // check presence of the same previous joker by id
+							if (!in_array($j->getId(), $newSet->getCardIds())) {
+								// and if not there, try to find its replacements elsewhere on the new table
+								if (sizeOf($set->lineJokerReplacements) === 1) {
+									// only one card mising from four of the type
+									if ($newTable->isCardPresent($set->lineJokerReplacements[0][0]->getId()) || 
+									$newTable->isCardPresent($set->lineJokerReplacements[0][1]->getId())) {
+										// success
+									} else {
+										dbg("card replacing joker from line set was not found on the new table");
+										return false;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+
+
 		$this->table = $newTable;
 		$this->players[$this->activePlayer]->setNewHand($newHand);
 		$this->players[$this->activePlayer]->canAddCards = true; // allow player to add cards, after finishing his first valid set on the table

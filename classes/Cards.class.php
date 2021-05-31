@@ -7,7 +7,6 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
 
     public function __construct(Card ...$var) {
 		$this->rows = (array) $var;
-		//var_dump($this, 'ssdfsfsdfsdfsdfaaaa'); die();
     }
 
     public function getCardByType(string $type, int $value) : ?Card {
@@ -16,6 +15,16 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
     			return $card;
     		}
     	}
+    }
+
+    public function getCardsByType(string $type, int $value) : ?array {
+        $ret = [];
+        foreach ($this->rows as $card) {
+            if ($card->type === $type && $card->value === $value) {
+                $ret[] = $card;
+            }
+        }
+        return $ret;
     }
 
     public function areOnlyJokersPresent() : bool {
@@ -49,9 +58,9 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
     }
 
     // return difference between this set a given array of selected cards
-    public function getCardDiff(Cards $someCards) : array {
+    /*public function getCardDiff(Cards $someCards) : array {
     	return array_diff($this->rows, $someCards->rows);
-    }
+    }*/
 
     public function sortCards() : void {
         usort($this->rows, function (Card $a, Card $b) : int {

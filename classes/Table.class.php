@@ -34,6 +34,11 @@ class Table implements \ArrayAccess, \Iterator, \Countable
         return true;
     }
 
+    public function isCardPresent(string $id) : bool {
+        $ids = $this->getCardIds();
+        return (in_array($id, $ids));
+    }
+
 
     // ArrayAccess interface
 

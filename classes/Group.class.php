@@ -5,10 +5,14 @@ class Group extends Cards {
 
 	public string $id = '';
 
+	// array could include one or more arrays with pairs of replaceable cards
+	public array $sameTypeJokerReplacements = []; // special case, if group is of the same value with joker, we must during disassemble/modification of the group be sure, that specific card has been added to the table; OR mode
+	public array $lineJokerReplacements = []; // AND mode
+
 	private function __construct() {
 	}
 
-	public static function createSet(Cards $newSet, string $id) : ? self {
+	public static function createSet(Cards $newSet, string $id) : ?self {
 		if (self::validate($newSet)) {
 			$set = new Group();
 			$set->rows = $newSet->getCards();
@@ -16,6 +20,54 @@ class Group extends Cards {
 			return $set;
 		} else {
 			return null;
+		}
+	}
+
+	public function fillJokerReplacements(Cards $deck) : void {
+		dbg('fillJokerReplacements');
+
+		$types = [];
+		$values = [];
+		foreach ($this->rows as $card) {
+			$types[] = $card->type;
+			$values[] = $card->value;
+		}
+		$typesUnique = array_unique($types);
+		$valuesUnique = array_unique($values);
+
+		// there are no jokers
+		if (!in_array(0, $valuesUnique)) {
+			return;
+		}
+
+		// three or four cards of the same value but different types, with jokers
+		if ((sizeOf($typesUnique) === sizeOf($this->rows)) && 
+			(sizeOf($valuesUnique) === 2 && in_array(0, $valuesUnique)) && 
+			sizeOf($this->rows)<5) {
+
+			$value = array_diff($valuesUnique, [Card::WILD]);
+			$missingTypes = array_diff([Card::SPADES, Card::CLUBS, CARD::HEARTS, Card::DIAMONDS, Card::WILD], $typesUnique);
+			foreach($missingTypes as $type) {
+				$this->sameTypeJokerReplacements[] = $deck->getCardsByType($type, $value[0]);
+			}
+
+		} else { // we are looking for next/previous value replacement exactly in line of cards
+
+			foreach ($this->rows as $i => $card) {
+				if ($i === 0 && $card->type === Card::WILD) { // based on next card we will know the one we are looking for
+					if (($this->rows[$i+1]->value - 1) === 0) { // special rewind case => so pick King/13 instead
+						$this->lineJokerReplacements[] = $deck->getCardsByType($this->rows[$i+1]->type, 13);
+					} else {
+						$this->lineJokerReplacements[] = $deck->getCardsByType($this->rows[$i+1]->type, $this->rows[$i+1]->value - 1);
+					}
+				} else if ($i > 0 && $card->type === Card::WILD) { // we will decide on previous card base
+					if (($this->rows[$i-1]->value + 1) === 0) { // special rewind case => so pick Ace/1 instead
+						$this->lineJokerReplacements[] = $deck->getCardsByType($this->rows[$i-1]->type, 1);
+					} else {
+						$this->lineJokerReplacements[] = $deck->getCardsByType($this->rows[$i-1]->type, $this->rows[$i-1]->value + 1);
+					}
+				}
+			}
 		}
 	}
 

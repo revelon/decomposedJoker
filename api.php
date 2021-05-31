@@ -147,6 +147,10 @@ switch ($data->action) {
 		}
 		$table = new Table();
 		$problem = false;
+
+		$play = Game::load($data->gameId);
+		mylog('CASE doTableChange data loaded');
+
 		foreach ($data->table as $grp) {
 			$newSet = new Cards();
 			foreach ($grp->cards as $c) {
@@ -155,6 +159,7 @@ switch ($data->action) {
 			dbg('new set to validate', $newSet);
 			$g = Group::createSet($newSet, $grp->id);
 			if ($g) {
+				$g->fillJokerReplacements($play->getDeck());
 				$table[] = $g;
 			} else {
 				$problem = true;
@@ -166,8 +171,6 @@ switch ($data->action) {
 			break;
 		}
 		mylog('CASE doTableChange validations done');
-		$play = Game::load($data->gameId);
-		mylog('CASE doTableChange data loaded');
 		if ($play && $play->doTurnAsTableChange($data->playerId, $table, $hand)) {
 			$play->save(); // won = player won the game
 			mylog('CASE doTableChange data saved');
