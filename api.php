@@ -184,7 +184,7 @@ switch ($data->action) {
 		} else {
 			http_response_code(403);
 			echo json_encode( [ 'message' => 'Table or player hand is invalid / ' . $result->message, 
-				'invalidGroupId' => $problem->groupId, 'dbg' => $dbgBuffer ] );
+				'invalidGroupId' => $result->groupId, 'dbg' => $dbgBuffer ] );
 		}
 		break;
 }

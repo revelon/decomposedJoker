@@ -7,11 +7,11 @@
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
-		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
+		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle; margin-bottom: 3px;}
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
 		div div.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
-		div div.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black);}
+		div div.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black) hue-rotate(-50deg);}
 		div#guiTable div.invalid {filter: drop-shadow(2px 2px 8px Red);}
 
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
@@ -158,6 +158,19 @@
 					console.log('trying swap of cards:', window.actives);
 					let hand = {id: 0, cards: [], controls: false}; // 0 = special setId and is always player's hand
 					let table = [];
+
+					// swap is allowed only for joker on the table, must be one of the cards
+					let joker;
+					for (let x in window.actives) {
+						if (window.allCards[window.actives[x]].type === 'wildcard') {
+							joker = window.actives[x];
+						}
+					}
+					if (!joker) { // invalid turn
+						guiMessages.append(el('div', null, 'Měněná karta mus být pouze žolík!!'));
+						showFailure();
+						return;
+					}
 
 					window.hand[0].cards.forEach( (c) => {
 						hand.cards.push( (c == actives[0]) ? actives[1] : (c == actives[1]) ? actives[0] : c );
@@ -923,7 +936,7 @@
 			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění. Novou hru je po skončení předchozí možno spustit znovu, již bez potřeby zadávání kódu.</li>
 			<li>Pokud tlačítka <b>Vzít kartu</b> a <b>Provést změny</b> překáží nebo jsou na nevhodném místě, je možné je za šipku vedle nich <b>přetáhnout</b> na obrazovce na libovolné místo.</li>
 			<li><b>klávesa A</b> = pokud chce hráč po vyložení své první validní sestavy měnit i sestavy již vyložené jinými hráči na stole, obojí v jediném tahu.</li>
-			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, např. žolík a karta namísto něj v sestavě na stole, provede se jejich výměna.</li>
+			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, žolík v existující sestavě a karta namísto něj do sestavy, provede se jejich výměna.</li>
 			<li><b>klávesa Mezerník</b> = alternativní zkratka pro <b>Vzít si další kartu</b></li>
 			<li><b>klávesa Enter</b> = alternativní zkratka pro potvrzení <b>Provedení změn</b> na stole</li>
 		</ul>
@@ -959,12 +972,11 @@ kupicku karet na brani? budik z recepce na dalsi tah
 obcas neni sestava na stole aktivni, ac by byt mela
 vyjimka na historii pro jednoho hrace at se nepta na historii 2 karet v ruce
 nabidnout vice variant hry
-vyraznejsi podbarveni
 akceptovat i opacne poradi karet
 lepsi blur/klavesy
 ukazat kolik karet zbyva v balicku
 ukazovat ktera sestava je nevalidni a proc
-Swap povolit jen na jokery
+Swap povolit jen na jokery - lepe
 Udelat neco jako A povoleni/validaci na hrace a tah, ze ziska jednorazovy permission rozebrat sestavu s zolikem - upravit i pro dnesni A !!
 Dat ruku dolu a otocit poradi na stole
 Zkusit vejirky z karet

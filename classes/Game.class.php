@@ -39,18 +39,6 @@ class Game {
 		$p->addCardToHand($this->deck->popCard());
 		$p->addCardToHand($this->deck->popCard());
 
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-
 		$this->players[$p->getId()] = $p;
 		dbg("player set", $p);
 		return $p->getId();
@@ -171,7 +159,6 @@ class Game {
 									} else {
 										dbg("card replacing joker from set of four of the type was not found on the new table A");
 										return ValidationResult::get(false, 'card-replacing-joker-from-set-of-four-of-the-type-was-not-found-on-the-table-a', $newSet->id);
-										return false;
 									}
 								} else if (sizeOf($set->sameTypeJokerReplacements) === 2) {
 									// two cards mising from four of the type
