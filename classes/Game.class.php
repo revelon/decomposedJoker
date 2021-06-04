@@ -5,6 +5,7 @@ class Game {
 	private array $players = [];
 	private array $allCardIds = [];	
 	private ?Cards $deck = null;
+	private ?Cards $fullDeck = null; // temporary solution, solve in better way later!!
 	private ?Table $table = null;
 	private string $activePlayer = '';
 	public string $status = 'inactive'; // inactive | playing | finished
@@ -20,6 +21,7 @@ class Game {
 
 	public function startNewGame() {
 		$this->deck = $this->createDeck();
+		$this->fullDeck = clone $this->deck;
 		$this->table = new Table();
 	}
 
@@ -36,6 +38,19 @@ class Game {
 		$p->addCardToHand($this->deck->popCard());
 		$p->addCardToHand($this->deck->popCard());
 		$p->addCardToHand($this->deck->popCard());
+
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+
 		$this->players[$p->getId()] = $p;
 		dbg("player set", $p);
 		return $p->getId();
@@ -74,31 +89,32 @@ class Game {
 		return clone $this->players[$id];
 	}
 
-	public function doTurnAsGetCard(string $id) : bool {
+	public function doTurnAsGetCard(string $id) : ValidationResult {
 		if ($id !== $this->activePlayer) {
-			return false;
+			return ValidationResult::get(false, 'not-active-player-cannot-get-a-card');
 		}
 		$this->players[$id]->addCardToHand($this->deck->popCard());
 		dbg("player's hand", $this->players[$id]->getHand());
 		$this->nextPlayerTurn();
-		return true;
+		return ValidationResult::get(true);
 	}
 
-	public function doTurnAsTableChange(string $id, Table $newTable, Cards $newHand) : bool {
+	public function doTurnAsTableChange(string $id, Table $newTable, Cards $newHand) : ValidationResult {
 		// only active player is allowed to make changes
 		if ($id !== $this->activePlayer) {
 			dbg("not current/active player is forbidden to play");
-			return false;
+			return ValidationResult::get(false, 'not-active-player-is-forbidden-to-play');
 		}
 		// there should be at least one whole set on the table
 		if (!sizeOf($newTable)) {
 			dbg("empty new table");
-			return false;
+			return ValidationResult::get(false, 'new-table-is-empty');
 		}
 		// we should validate that new table has all valid groups
-		if (!$newTable->areAllSetsValid()) {
-			dbg("invalid sets on the new table");
-			return false;
+		$validation = $newTable->areAllSetsValid();
+		if (!$validation->success) {
+			dbg("invalid set on the new table", $validation);
+			return $validation;
 		}
 		// helper id sets
 		$currentHandIds = $this->players[$this->activePlayer]->getHand()->getCardIds();
@@ -122,22 +138,22 @@ class Game {
 		// at least one card from player's hand is part of the new table
 		if (!sizeOf($handDiff) || !sizeOf($tableDiff) || sizeOf(array_diff($handDiff, $tableDiff))) {
 			dbg("no cards from hand were moved to table");
-			return false;
+			return ValidationResult::get(false, 'no-cards-from-hand-were-moved-to-table');
 		}
 		// there are still all cards in the game, none is missing or extra and they are the same ones
 		if (sizeOf(array_diff(array_merge($newHandIds, $newTableIds, $otherPlayersHands), $this->allCardIds))) {
 			dbg("set of new and old cards are different");
-			return false;
+			return ValidationResult::get(false, 'set-of-new-and-old-cards-are-different');
 		}
 		// no card from previous table is left in player's hand
 		if (sizeOf(array_intersect($currentTableIds, $newHandIds))) {
 			dbg("card from table left in new hand");
-			return false;
+			return ValidationResult::get(false, 'card-from-table-is-left-in-hand');
 		}
 
 		// !!!!!
-		// funguje blbe uz pridelovani ID z decku, protoze uz mohou byt rozdany v ruce!!! !!!!!
-		var_dump($this->table);die;
+		// funguje blbe uz pridelovani ID z decku, protoze uz mohou byt rozdany v ruce!!! !!!!! docasne fixnuto!
+		// var_dump($this->table); die('aaaaaaa');
 		// projit stary stul, vytahnout vsechny nahrady jokeru a pokud neco z toho nesedi v novem, kricet!!
 		foreach ($this->table as $set) {
 			if (sizeOf($set->sameTypeJokerReplacements)) { // there were some jokers in previous set
@@ -149,23 +165,24 @@ class Game {
 								// and if not there, try to find its replacements elsewhere on the new table
 								if (sizeOf($set->sameTypeJokerReplacements) === 1) {
 									// only one card mising from four of the type
-									if ($newTable->isCardPresent($set->sameTypeJokerReplacements[0][0]->getId()) || 
-									$newTable->isCardPresent($set->sameTypeJokerReplacements[0][1]->getId())) {
+									if ($newTable->isCardPresent($set->sameTypeJokerReplacements[0]->cards[0]->getId()) || 
+									$newTable->isCardPresent($set->sameTypeJokerReplacements[0]->cards[1]->getId())) {
 										// success
 									} else {
 										dbg("card replacing joker from set of four of the type was not found on the new table A");
+										return ValidationResult::get(false, 'card-replacing-joker-from-set-of-four-of-the-type-was-not-found-on-the-table-a', $newSet->id);
 										return false;
 									}
 								} else if (sizeOf($set->sameTypeJokerReplacements) === 2) {
 									// two cards mising from four of the type
-									if (($newTable->isCardPresent($set->sameTypeJokerReplacements[0][0]->getId()) || 
-									$newTable->isCardPresent($set->sameTypeJokerReplacements[0][1]->getId())) && 
-									($newTable->isCardPresent($set->sameTypeJokerReplacements[1][0]->getId()) || 
-									$newTable->isCardPresent($set->sameTypeJokerReplacements[1][1]->getId()))) {
+									if (($newTable->isCardPresent($set->sameTypeJokerReplacements[0]->cards[0]->getId()) || 
+									$newTable->isCardPresent($set->sameTypeJokerReplacements[0]->cards[1]->getId())) && 
+									($newTable->isCardPresent($set->sameTypeJokerReplacements[1]->cards[0]->getId()) || 
+									$newTable->isCardPresent($set->sameTypeJokerReplacements[1]->cards[1]->getId()))) {
 										// success
 									} else {
 										dbg("card replacing joker from set of four of the type was not found on the new table B");
-										return false;
+										return ValidationResult::get(false, 'card-replacing-joker-from-set-of-four-of-the-type-was-not-found-on-the-table-b', $newSet->id);
 									}
 								}
 							}
@@ -174,24 +191,19 @@ class Game {
 				}
 			} else if (sizeOf($set->lineJokerReplacements)) { // there were some jokers in previous set II
 				// TBD implement and beware which joker you are solving
-				$jokers = $set->getCardsByType(Card::WILD, 0); // get them all
-
-				if (sizeOf($jokers) > 1) die('NOT IMPLEMENTED CASE! FIX ME!'); // !!!!
+				$jokers = $set->getCardsByType(Card::WILD, 0); // get them all from old set
 
 				foreach ($newTable as $newSet) {
 					if ($set->id === $newSet->id) { // find if the set still exists on new table
 						foreach ($jokers as $j) { // check presence of the same previous joker by id
 							if (!in_array($j->getId(), $newSet->getCardIds())) {
 								// and if not there, try to find its replacements elsewhere on the new table
-								if (sizeOf($set->lineJokerReplacements) === 1) {
-									// only one card mising from four of the type
-									if ($newTable->isCardPresent($set->lineJokerReplacements[0][0]->getId()) || 
-									$newTable->isCardPresent($set->lineJokerReplacements[0][1]->getId())) {
-										// success
-									} else {
-										dbg("card replacing joker from line set was not found on the new table");
-										return false;
-									}
+								if ($newTable->isCardPresent($set->lineJokerReplacements[$j->getId()]->cards[0]->getId()) || 
+								$newTable->isCardPresent($set->lineJokerReplacements[$j->getId()]->cards[1]->getId())) {
+									// success
+								} else {
+									dbg("card replacing joker from line set was not found on the new table");
+									return ValidationResult::get(false, 'card-replacing-joker-from-line-was-not-found-on-the-table', $newSet->id);
 								}
 							}
 						}
@@ -199,7 +211,6 @@ class Game {
 				}
 			}
 		}
-
 
 
 		$this->table = $newTable;
@@ -214,7 +225,7 @@ class Game {
 			$this->nextPlayerTurn();
 		}
 		dbg("finishing valid turn");
-		return true;
+		return ValidationResult::get(true);
 	}
 
 	// todo: probably needs some refactoring
@@ -277,13 +288,23 @@ class Game {
 		return $this->table;
 	}
 
-	public function getDeck() : Cards {
-		return $this->deck;
+	public function getDeck($full = false) : Cards {
+		return ($full) ? $this->fullDeck : $this->deck;
 	}
 
 	private function createDeck() : Cards {
 		$deck = new Cards(
 			new Card(0, Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+
+			new Card(0, Card::WILD),  // boost some extra jokers, for more fun, remove later !!!!
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+			new Card(0,	Card::WILD),
+
+			new Card(0, Card::WILD),  // boost some extra jokers, for more fun, remove later !!!!
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),

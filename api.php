@@ -116,7 +116,7 @@ switch ($data->action) {
 		mylog('CASE getCard start');
 		$play = Game::load($data->gameId);
 		mylog('CASE getCard data loaded');
-		if ($play && $play->getActivePlayerId() === $data->playerId && $play->doTurnAsGetCard($data->playerId)) {
+		if ($play && $play->getActivePlayerId() === $data->playerId && $play->doTurnAsGetCard($data->playerId)->success) {
 			mylog('CASE getCard data saved');
 			$play->save();
 			echo json_encode( [ 'data' => true, 'dbg' => $dbgBuffer ] );
@@ -132,11 +132,12 @@ switch ($data->action) {
 		foreach ($data->cards->cards as $c) {
 			$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 		}
-		if (Group::validate($newSet)) {
+		$result = Group::validate($newSet);
+		if ($result->success) {
 			echo json_encode( [ 'data' => true, 'dbg' => $dbgBuffer ] );
 		} else {
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Card set is invalid', 'dbg' => $dbgBuffer ] );
+			echo json_encode( [ 'message' => 'Card set is invalid / ' . $result->message, 'dbg' => $dbgBuffer ] );
 		}
 		break;
 	case "doTableChange":
@@ -146,7 +147,7 @@ switch ($data->action) {
 			$hand->pushCard(new Card($c->value, $c->type, $c->id));
 		}
 		$table = new Table();
-		$problem = false;
+		$problem = null;
 
 		$play = Game::load($data->gameId);
 		mylog('CASE doTableChange data loaded');
@@ -158,26 +159,32 @@ switch ($data->action) {
 			}
 			dbg('new set to validate', $newSet);
 			$g = Group::createSet($newSet, $grp->id);
-			if ($g) {
-				$g->fillJokerReplacements($play->getDeck());
+			if ($g instanceOf Group) {
+				$g->fillJokerReplacements($play->getDeck(true)); // merge with full deck !! temp solution
 				$table[] = $g;
 			} else {
-				$problem = true;
+				$problem = $g; // instane of ValidationResult
 			}
 		}
 		if ($problem) {
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Some table set is invalid', 'dbg' => $dbgBuffer ] );
+			echo json_encode( [ 'message' => 'Some table set is invalid / ' . $problem->message, 
+				'invalidGroupId' => $problem->groupId, 'dbg' => $dbgBuffer ] );
 			break;
 		}
 		mylog('CASE doTableChange validations done');
-		if ($play && $play->doTurnAsTableChange($data->playerId, $table, $hand)) {
+		$result = null;
+		if ($play) {
+			$result = $play->doTurnAsTableChange($data->playerId, $table, $hand);
+		}
+		if ($result->success) {
 			$play->save(); // won = player won the game
 			mylog('CASE doTableChange data saved');
 			echo json_encode( [ 'data' => ($play->status === 'finished') ? 'won' : 'done', 'dbg' => $dbgBuffer ] );
 		} else {
 			http_response_code(403);
-			echo json_encode( [ 'message' => 'Table or player hand is invalid', 'dbg' => $dbgBuffer ] );
+			echo json_encode( [ 'message' => 'Table or player hand is invalid / ' . $result->message, 
+				'invalidGroupId' => $problem->groupId, 'dbg' => $dbgBuffer ] );
 		}
 		break;
 }

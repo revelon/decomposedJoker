@@ -24,14 +24,16 @@ class Table implements \ArrayAccess, \Iterator, \Countable
         return $ids;
     }
 
-    public function areAllSetsValid() : bool {
+    public function areAllSetsValid() : ValidationResult {
         foreach ($this->rows as $set) {
             dbg('areAllSetsValid', $set, Group::validate($set));
-            if (!Group::validate($set)) {
-                return false;
+            $result = Group::validate($set);
+            if (!$result->success) {
+                $result->groupId = $set->id; // set invalid set id
+                return $result;
             }
         }
-        return true;
+        return ValidationResult::get(true);
     }
 
     public function isCardPresent(string $id) : bool {

@@ -10,8 +10,9 @@
 		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle;}
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
-		div div.active {filter: drop-shadow(-3px 3px 1px Black); background-color: LightCyan !important; transform: translateY(-7px) !important;}
-		div div.changed {transform: translateY(7px) !important; filter: drop-shadow(-3px 3px 1px Black);}
+		div div.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
+		div div.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black);}
+		div#guiTable div.invalid {filter: drop-shadow(2px 2px 8px Red);}
 
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
 		div#guiTable div.c6 div {margin-left: -4px;}
@@ -52,6 +53,8 @@
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px; cursor: pointer;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
+		div#guiMessages {position: fixed; left: 20%; top: 70%; right: 20%;}
+
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.7; font-weight: lighter; padding: 0; margin: -17px 0 0 -2px;}
 		/* main layout */
 		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(4, [row] auto ); width: 100vw; height: 100vh;}
@@ -61,6 +64,14 @@
 		.hand {grid-column: col 2 / span 4; grid-row: row;}
 		.table {grid-column: col 2 / span 4; grid-row: row 2 / span 3;}
 
+		@keyframes disappear { /* clean up the mess later */
+		  0% {display: block; visibility: visible; opacity: 0; margin-top: 100px; height: 24px;}
+		  15% {opacity: 1; margin-top: 0px;}
+		  70% {opacity: 0.7; margin-top: 0px;}
+		  99% {display: none; opacity: 0; margin-top: 100px; height: 30px;}
+		  100% {display: none; opacity: 0; margin-top: 0; height: 0px;}
+		}
+		div#guiMessages > div {animation-name: disappear; animation-duration: 4000ms; animation-fill-mode: forwards; background-color: Cyan; font-size: 1em; color: Black; margin: 0; padding: 4px; overflow: hidden;}
 	</style>
 	<script>
 		"use strict";
@@ -84,6 +95,7 @@
 		var guiTable;
 		var guiPlayers;
 		var guiActions;
+		var guiMessages;
 		var audioObj = new Audio('cardflip.mp3');
 		var audioTick = new Audio('playcard1.mp3');
 		var audioChange = new Audio('taketrick.mp3');
@@ -98,6 +110,8 @@
 			window.guiTable.innerHTML = '';
 			window.guiPlayers = document.getElementById('guiPlayers');
 			window.guiPlayers.innerHTML = '';
+			window.guiMessages = document.getElementById('guiMessages');;
+			window.guiMessages.innerHTML = '';
 
 			window.guiActions = document.getElementById('actions');
 			let dt = document.getElementById('dragTarget');
@@ -126,6 +140,11 @@
 			}
 			const ret = await response.json(); // parses JSON response into native JavaScript objects
 			if (response.status > 399) {
+				if (ret.invalidGroupId) {
+					// dirty solution, do it elsewhere !!!! we are highlighting invalid card group on the table 
+					document.getElementById(ret.invalidGroupId).classList.add('invalid');
+				}
+				guiMessages.append(el('div', null, ret.message)); // do it also elsewhere !!
 				throw "Server responded error with: " + ret.message;
 			}
 			console.dir('server call returned debug:', ret.dbg);
@@ -917,6 +936,8 @@
 		<div id="results"></div>
 	</div>
 
+	<div id="guiMessages"></div>
+
 </body>
 </html>
 
@@ -942,5 +963,12 @@ vyraznejsi podbarveni
 akceptovat i opacne poradi karet
 lepsi blur/klavesy
 ukazat kolik karet zbyva v balicku
+ukazovat ktera sestava je nevalidni a proc
+Swap povolit jen na jokery
+Udelat neco jako A povoleni/validaci na hrace a tah, ze ziska jednorazovy permission rozebrat sestavu s zolikem - upravit i pro dnesni A !!
+Dat ruku dolu a otocit poradi na stole
+Zkusit vejirky z karet
+Dat jmeno hrace k ruce a zvetsit oblast hracu
+funknci i na mobilu
+karta po dvojitem switchi v ruce zustava blbe sortovana dokud si nevezmu znovu ze serveru
 -->
-
