@@ -8,10 +8,12 @@
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
 		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle; margin-bottom: 3px;}
+		div#guiHand div img, div#guiTable div img, div#results div div img {width: 52px; height: 74px; display: inline-block; cursor: pointer; margin-left: 2px; user-select: none; vertical-align: middle; margin-bottom: 3px;}
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
+		div img.normal {transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
-		div div.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
-		div div.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black) hue-rotate(-50deg);}
+		div div.active, div img.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
+		div div.changed, div img.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black) hue-rotate(-50deg);}
 		div#guiTable div.invalid {filter: drop-shadow(2px 2px 8px Red);}
 
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
@@ -91,6 +93,7 @@
 		var myTurn = false; // flag if it is this player's turn or not
 		var tick; // holder for refresing/ticking setInterval object
 		var lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
+		var renderCardsAsImg = true;		
 		var guiHand;
 		var guiTable;
 		var guiPlayers;
@@ -224,6 +227,7 @@
 				const deck = await postData({ action: 'getGameCards', 'gameId': window.gameId });
 				await initHelperReset();
 				deck.forEach(c => window.allCards[c.id] = c);
+				window.allCards['empty'] = {id: '', value: 'empty', type: 'empty'}; // case for rendering empty card
 				initHelper();
 			} catch (err) {
 				console.dir('err', err);
@@ -666,7 +670,7 @@
 				if (!groups[s].cards.length && groups[s].id !== 0) {
 					console.log('rendering set as empty group');
 					for (let a = 0; a < 3; a++) {
-						const wrapper = el('div');
+						const wrapper = renderCard('empty');
 						wrapper.classList.add('empty');
 						nl.append(wrapper);
 					}
@@ -674,7 +678,7 @@
 
 				if (groups[s].id != 0) { // not for hand
  					if (groups[s].cards.length) {
-						const wrapper0 = el('div');
+						const wrapper0 = renderCard('empty');
 						wrapper0.classList.add('empty');
 						if (groups[s].controls) {
 							wrapper0.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id, true), true);
@@ -683,7 +687,7 @@
 						}
 						nl.prepend(wrapper0);
 
-						const wrapper = el('div');
+						const wrapper = renderCard('empty');
 						wrapper.classList.add('empty');
 						if (groups[s].controls) {
 							wrapper.addEventListener('click', (e) => addActiveCardsToSet(e, groups[s].id), true);
@@ -762,10 +766,16 @@
 		}
 
 		function renderCard(id) {
-			const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&nbsp;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;'};
-			let card = el('div', id, `<p>${m[window.allCards[id].value]}</p><p>${m[window.allCards[id].type]}</p><p>${m[window.allCards[id].value]}</p>`);
-			card.classList.add(window.allCards[id].type, window.allCards[id].value);
-			return card;
+			if (!window.renderCardsAsImg) {
+				const m = {spades: '&spades;', hearts: '&hearts;', diamonds: '&diams;', clubs: '&clubs;', wildcard: '&nbsp;', 1: 'A', 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 'J', 12: 'Q', 13: 'K', 0: '&zeta;', empty: ''};
+				let card = el('div', id, `<p>${m[window.allCards[id].value]}</p><p>${m[window.allCards[id].type]}</p><p>${m[window.allCards[id].value]}</p>`);
+				card.classList.add(window.allCards[id].type, window.allCards[id].value);
+				return card;
+			} else {
+				let card = el('img', id);
+				card.src = 'cards.svg#'+window.allCards[id].type+"_"+window.allCards[id].value;
+				return card;
+			}
 		}
 
 		// and set action permissing, refactor later
@@ -981,6 +991,11 @@ Udelat neco jako A povoleni/validaci na hrace a tah, ze ziska jednorazovy permis
 Dat ruku dolu a otocit poradi na stole
 Zkusit vejirky z karet
 Dat jmeno hrace k ruce a zvetsit oblast hracu
-funknci i na mobilu
+funkcni i na mobilu
 karta po dvojitem switchi v ruce zustava blbe sortovana dokud si nevezmu znovu ze serveru
+nova hra po dohrani jednoduseji
+vyresit ze dojdou karty uplne?
+preklady chyb a nezobrazuji se vsechny
+u hrace s moc dlouhym jmenem neni videt pocet karet
+spatny reset actives pri vice vymenach zoliku???
 -->
