@@ -8,12 +8,12 @@
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
 		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle; margin-bottom: 3px;}
-		div#guiHand div img, div#guiTable div img, div#results div div img {width: 52px; height: 74px; display: inline-block; cursor: pointer; margin-left: 2px; user-select: none; vertical-align: middle; margin-bottom: 3px;}
+		div#guiHand div img, div#guiTable div img, div#results div div img {width: 60px; display: inline-block; cursor: pointer; margin-left: -16px; user-select: none; vertical-align: middle; margin-bottom: 3px; border-radius: 3px; background-color: White; }
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
 		div img.normal {transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
 		div div.active, div img.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
-		div div.changed, div img.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black) hue-rotate(-50deg);}
+		div div.changed, div img.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black);}
 		div#guiTable div.invalid {filter: drop-shadow(2px 2px 8px Red);}
 
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
@@ -30,6 +30,20 @@
 		div#guiTable div.c16 div {margin-left: -16px; width: 32px;}
 		div#guiTable div.c17 div {margin-left: -16px; width: 32px;}
 
+		/*div#guiTable div.c5 img {margin-left: -4px;}
+		div#guiTable div.c6 img {margin-left: -8px;}
+		div#guiTable div.c7 img {margin-left: -12px;}
+		div#guiTable div.c8 img {margin-left: -16px;}
+		div#guiTable div.c9 img {margin-left: -20px;}
+		div#guiTable div.c10 img {margin-left: -24px;}
+		div#guiTable div.c11 img {margin-left: -28px;}
+		div#guiTable div.c12 img {margin-left: -32px;}
+		div#guiTable div.c13 img {margin-left: -36px;}
+		div#guiTable div.c14 img {margin-left: -40px;}
+		div#guiTable div.c15 img {margin-left: -40px;}
+		div#guiTable div.c16 img {margin-left: -40px;}
+		div#guiTable div.c17 img {margin-left: -40px;}*/
+
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; opacity: .8;}
 		div#guiPlayers > div.active {transform: translateY(0) !important; color: Black; opacity: 1;}
 		div.spades {background-color: White; color: Black;} 
@@ -44,7 +58,7 @@
 		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 1.8em;}
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
-		div#guiTable > div {margin-top: 12px; display: inline-block; margin-left: 12px;}
+		div#guiTable > div, div#guiHand > div {margin-top: 12px; display: inline-block; margin-left: 20px;}
 		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#help, div#gameOver {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
@@ -56,15 +70,16 @@
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
 		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
 		div#guiMessages {position: fixed; left: 20%; top: 70%; right: 20%;}
+		button.disabled {color: Gray; pointer-events: none;}
 
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.7; font-weight: lighter; padding: 0; margin: -17px 0 0 -2px;}
 		/* main layout */
-		.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(4, [row] auto ); width: 100vw; height: 100vh;}
-		.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
-		.menu {grid-column: col; grid-row: row / span 2;}
-		.players {grid-column: col; grid-row: row 3 / span 2;}
-		.hand {grid-column: col 2 / span 4; grid-row: row;}
-		.table {grid-column: col 2 / span 4; grid-row: row 2 / span 3;}
+		div.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(4, [row] auto ); width: 100vw; height: 100vh;}
+		div.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
+		div.menu {grid-column: col; grid-row: row / span 2;}
+		div.players {grid-column: col; grid-row: row 3 / span 2;}
+		div.hand {grid-column: col 2 / span 4; grid-row: row;}
+		div.table {grid-column: col 2 / span 4; grid-row: row 2 / span 3;}
 
 		@keyframes disappear { /* clean up the mess later */
 		  0% {display: block; visibility: visible; opacity: 0; margin-top: 100px; height: 24px;}
@@ -122,7 +137,7 @@
 			dt.ondragstart = mouse2;
 		});
 
-		document.addEventListener('keydown', evalKey);
+		window.addEventListener('keydown', evalKey, {capture: false}, false);
 
 		async function postData(data = {}) {
 			// Default options are marked with *
@@ -276,9 +291,9 @@
 		function initHelper() {
 			console.log('method: initHelper');
 
-			document.getElementById('guiGameInit').setAttribute('disabled', true);
-			document.getElementById('guiGameJoin').setAttribute('disabled', true);
-			document.getElementById('guiRegPlayer').removeAttribute('disabled');
+			document.getElementById('guiGameInit').classList.add('disabled');
+			document.getElementById('guiGameJoin').classList.add('disabled');
+			document.getElementById('guiRegPlayer').classList.remove('disabled');
 			document.getElementById('gameIndicator').innerText = 'Kód hry: '+ window.gameId;
 			renderCardGroups(window.table, window.guiTable, window.lastTableCards);
 			startAutoRefresh();
@@ -300,10 +315,10 @@
 					window.hand[0].cards = plr.hand.slice();
 					window.lastHandCards.c = plr.hand.slice();
 					console.dir('registerPlayer', plr);
-					document.getElementById('guiRegPlayer').removeAttribute('disabled');
 					document.getElementById('indicator').innerText = 'Hráč: '+ name;
-					document.getElementById('guiRegPlayer').setAttribute('disabled', true);
-					document.getElementById('guiGameStart').removeAttribute('disabled');
+					document.getElementById('guiRegPlayer').blur();
+					document.getElementById('guiRegPlayer').classList.add('disabled');
+					document.getElementById('guiGameStart').classList.remove('disabled');
 					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
 					audioObj.play();
 				}
@@ -311,7 +326,6 @@
 				console.dir('err', err);
 				showFailure();
 			}
-			guiHand.focus();
 		}
 
 		async function startGame() {
@@ -320,10 +334,11 @@
 				if (await postData({ action: 'setActivePlayer', 'gameId': window.gameId, 'playerId': window.playerId })) {
 					console.dir('startGame', true);
 					window.gameStatus = 'playing';
-					document.getElementById('guiGameStart').setAttribute('disabled', true);
+					document.getElementById('guiGameStart').blur();
+					document.getElementById('guiGameStart').classList.add('disabled');
 					document.getElementById('guiTurnGetCard').removeAttribute('disabled');
 					document.getElementById('guiTurnChangeTable').removeAttribute('disabled');
-					document.getElementById('guiUndoRefresh').removeAttribute('disabled');
+					document.getElementById('guiUndoRefresh').classList.remove('disabled');
 				} else {
 					throw 'Setting player as active failed';
 				}
@@ -331,7 +346,6 @@
 				console.dir('err', err);
 				showFailure();
 			}
-			guiHand.focus();
 		}
 
 		async function getGameInfo(render = false) {
@@ -339,7 +353,7 @@
 			if (!window.myTurn && !document.hidden) {
 				document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
 				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
-				document.getElementById('guiUndoRefresh').setAttribute('disabled', true);
+				document.getElementById('guiUndoRefresh').classList.add('disabled');
 				try {
 					const p = await postData({ action: 'getGameInfo', 'gameId': window.gameId, 'playerId': window.playerId, 'knownStateFrom': window.lastModifiedAt });
 					console.dir('returned server info', JSON.stringify(p, null, 2));
@@ -374,13 +388,13 @@
 							results.append(el('hr'));
 						}
 
-						document.getElementById('guiGameInit').removeAttribute('disabled');
-						document.getElementById('guiGameJoin').removeAttribute('disabled');
-						document.getElementById('guiRegPlayer').setAttribute('disabled', true);
+						document.getElementById('guiGameInit').classList.remove('disabled');
+						document.getElementById('guiGameJoin').classList.remove('disabled');
+						document.getElementById('guiRegPlayer').classList.add('disabled');
 						document.getElementById('gameOver').classList.toggle('visible');
 						document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
 						document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
-						document.getElementById('guiUndoRefresh').setAttribute('disabled', true);
+						document.getElementById('guiUndoRefresh').classList.add('disabled');
 					}
 				} catch (err) {
 					console.dir('err', err);
@@ -388,7 +402,7 @@
 			} else {
 				document.getElementById('guiTurnGetCard').removeAttribute('disabled');
 				document.getElementById('guiTurnChangeTable').removeAttribute('disabled');
-				document.getElementById('guiUndoRefresh').removeAttribute('disabled');
+				document.getElementById('guiUndoRefresh').classList.remove('disabled');
 			}
 		}
 
@@ -789,8 +803,8 @@
 
 			if (refresh) {
 				if (window.gameStatus === 'playing') {
-					document.getElementById('guiGameStart').setAttribute('disabled', true);
-					document.getElementById('guiUndoRefresh').removeAttribute('disabled');
+					document.getElementById('guiGameStart').classList.add('disabled');
+					document.getElementById('guiUndoRefresh').classList.remove('disabled');
 				}
 				getServerState(false);
 			}
@@ -854,6 +868,13 @@
 			e.stopPropagation();
 		}
 
+		function changeCardLook() {
+			window.renderCardsAsImg = (!window.renderCardsAsImg);
+			renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
+			renderCardGroups(window.table, window.guiTable, window.lastTableCards);
+			showSuccess();
+		}
+
 		// several methods related to freagging main actions around screen 
 		var mouse1 = function(event) {
 			let shiftX = event.clientX - guiActions.getBoundingClientRect().left;
@@ -892,18 +913,18 @@
 
 	<div class="wrapper">
 		<div class="box menu">
-			<img src="joker.svg">
+			<img src="joker.svg" alt="Joker" onclick="changeCardLook()">
 			<h1>Rozkládaný žolík</h1>
 
 			<button onclick='initGame()' id='guiGameInit'>&#9863; Založit hru</button>
 			<button onclick='joinGame()' id='guiGameJoin'>&#9865; Připojit se</button>
-			<button onclick='registerPlayer()' id='guiRegPlayer' disabled>&#8858; Registrovat hráče</button>
-			<button onclick='startGame()' id='guiGameStart' disabled>&#128571; Zahájit hru</button>
-			<button onclick='getServerState(true)' id='guiUndoRefresh' disabled>&#8634; Obnovit (Zpět)</button>
+			<button onclick='registerPlayer()' id='guiRegPlayer' class='disabled'>&#8858; Registrovat hráče</button>
+			<button onclick='startGame()' id='guiGameStart' class='disabled'>&#128571; Zahájit hru</button>
+			<button onclick='getServerState(true)' id='guiUndoRefresh' class='disabled'>&#8634; Obnovit (Zpět)</button>
 			<button onclick='document.getElementById("help").classList.toggle("visible")'>? Nápověda</button>
 			
-			<h3 id="gameIndicator"></h3>
-			<h3 id="indicator"></h3>
+			<h3 id="gameIndicator">&nbsp;</h3>
+			<h3 id="indicator">&nbsp;</h3>
 		</div>
 
 		<div class="box players">
@@ -932,7 +953,7 @@
 		<button onclick='document.getElementById("help").classList.toggle("visible")'>X</button>
 		<h2>Nápověda</h2>
 		<ul>
-			<li>První hráč musí hru <b>založit</b> a další hráči se pak mohou ke hře <b>připojit</b>.</li> Pro to je třeba zadat <b>stejný kód hry</b>, zobrazený v levém sloupci, který musí zahajující hráč ostatním hráčům <b>předat</b>.</li>
+			<li>První hráč musí hru <b>založit</b> a další hráči se pak mohou ke hře <b>připojit</b>. Pro to je třeba zadat <b>stejný kód hry</b>, zobrazený v levém sloupci, který musí zahajující hráč ostatním hráčům <b>předat</b>.</li>
 			<li>Pro hru je potřeba se jako hráč <b>registrovat</b> pod zvoleným jménem.</li>
 			<li>Jakmile je hra založena a registrován alespoň jeden hráč, je možno hru <b>zahájit</b>.</li>
 			<li>Na tahu je vždy právě jeden hráč (ukazatel vlevo dole) a ostatní hráči nemají v té chvíli možnost provádět žádné akce.</li>
@@ -955,7 +976,7 @@
 	<div id="gameOver">
 		<button onclick='document.getElementById("gameOver").classList.toggle("visible")'>X</button>
 		<h1>!! Konec hry !!</h1>
-		<nr>
+		<hr>
 		<div id="results"></div>
 	</div>
 
@@ -978,7 +999,7 @@ dynamicka delka sestav
 reset results pridat pri nove hre - je to historie?
 esc na zavreni konce hry
 resetovat actives ?
-kupicku karet na brani? budik z recepce na dalsi tah
+kupicku karet na brani? budik/hlavicka z recepce na dalsi tah
 obcas neni sestava na stole aktivni, ac by byt mela
 vyjimka na historii pro jednoho hrace at se nepta na historii 2 karet v ruce
 nabidnout vice variant hry
