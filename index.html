@@ -8,13 +8,17 @@
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
 		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle; margin-bottom: 3px;}
-		div#guiHand div img, div#guiTable div img, div#results div div img {width: 60px; display: inline-block; cursor: pointer; margin-left: -16px; user-select: none; vertical-align: middle; margin-bottom: 3px; border-radius: 3px; background-color: White; }
+		div#guiHand div img, div#guiTable div img, div#results div div img {width: 70px; display: inline-block; cursor: pointer; margin-left: -18px; user-select: none; vertical-align: middle; margin-bottom: 3px; border-radius: 3px; background-color: White; }
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
 		div img.normal {transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
 		div div.active, div img.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
 		div div.changed, div img.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black);}
 		div#guiTable div.invalid {filter: drop-shadow(2px 2px 8px Red);}
+		div#guiTurnGetCard img {margin-left: -67px; width: 70px; display: inline-block; overflow: auto;}
+		div#guiTurnGetCard img:first-of-type {margin-left: 0 !important;}
+		div#guiTurnChangeTable, div#guiTurnGetCard {float: right; cursor: cell;}
+		div#guiTurnChangeTable:hover, div#guiTurnGetCard:hover {filter: contrast(200%);}
 
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
 		div#guiTable div.c6 div {margin-left: -4px;}
@@ -29,20 +33,6 @@
 		div#guiTable div.c15 div {margin-left: -16px; width: 32px;}
 		div#guiTable div.c16 div {margin-left: -16px; width: 32px;}
 		div#guiTable div.c17 div {margin-left: -16px; width: 32px;}
-
-		/*div#guiTable div.c5 img {margin-left: -4px;}
-		div#guiTable div.c6 img {margin-left: -8px;}
-		div#guiTable div.c7 img {margin-left: -12px;}
-		div#guiTable div.c8 img {margin-left: -16px;}
-		div#guiTable div.c9 img {margin-left: -20px;}
-		div#guiTable div.c10 img {margin-left: -24px;}
-		div#guiTable div.c11 img {margin-left: -28px;}
-		div#guiTable div.c12 img {margin-left: -32px;}
-		div#guiTable div.c13 img {margin-left: -36px;}
-		div#guiTable div.c14 img {margin-left: -40px;}
-		div#guiTable div.c15 img {margin-left: -40px;}
-		div#guiTable div.c16 img {margin-left: -40px;}
-		div#guiTable div.c17 img {margin-left: -40px;}*/
 
 		div#guiPlayers div {width: 96%; display: inline-block; margin: 2px; padding: 4px; background-image: linear-gradient(to right, BurlyWood, transparent); border-radius: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; opacity: .8;}
 		div#guiPlayers > div.active {transform: translateY(0) !important; color: Black; opacity: 1;}
@@ -68,9 +58,8 @@
 		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
 		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px; cursor: pointer;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
-		span#dragTarget {cursor: move; color: Black; font-size: 1.7em;}
 		div#guiMessages {position: fixed; left: 20%; top: 70%; right: 20%;}
-		button.disabled {color: Gray; pointer-events: none;}
+		.disabled {color: Gray; pointer-events: none; opacity: 0.5;}
 
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.7; font-weight: lighter; padding: 0; margin: -17px 0 0 -2px;}
 		/* main layout */
@@ -108,11 +97,10 @@
 		var myTurn = false; // flag if it is this player's turn or not
 		var tick; // holder for refresing/ticking setInterval object
 		var lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
-		var renderCardsAsImg = true;		
+		var renderCardsAsImg = false;		
 		var guiHand;
 		var guiTable;
 		var guiPlayers;
-		var guiActions;
 		var guiMessages;
 		var audioObj = new Audio('cardflip.mp3');
 		var audioTick = new Audio('playcard1.mp3');
@@ -131,10 +119,8 @@
 			window.guiMessages = document.getElementById('guiMessages');;
 			window.guiMessages.innerHTML = '';
 
-			window.guiActions = document.getElementById('actions');
-			let dt = document.getElementById('dragTarget');
-			dt.onmousedown = mouse1;
-			dt.ondragstart = mouse2;
+			document.getElementById('guiTurnGetCard').addEventListener('click', (e) => getCard(e), true);
+			document.getElementById('guiTurnChangeTable').addEventListener('click', (e) => doTableChange(e), true);
 		});
 
 		window.addEventListener('keydown', evalKey, {capture: false}, false);
@@ -224,12 +210,12 @@
 				}
 			}
 			if (e.code == 'Space') {
-				if (!document.getElementById('guiTurnGetCard').hasAttribute('disabled')) {
+				if (!document.getElementById('guiTurnGetCard').contains('disabled')) {
 					getCard();
 				}
 			}
 			if (e.code == 'Enter') {
-				if (!document.getElementById('guiTurnChangeTable').hasAttribute('disabled')) {
+				if (!document.getElementById('guiTurnChangeTable').contains('disabled')) {
 					doTableChange();
 				}
 			}
@@ -259,6 +245,7 @@
 			try {
 				const deck = await postData({ action: 'getGameCards', 'gameId': str });
 				deck.forEach(c => window.allCards[c.id] = c);
+				window.allCards['empty'] = {id: '', value: 'empty', type: 'empty'}; // case for rendering empty card
 				window.gameId = str;
 				initHelper();
 			} catch (err) {
@@ -336,8 +323,8 @@
 					window.gameStatus = 'playing';
 					document.getElementById('guiGameStart').blur();
 					document.getElementById('guiGameStart').classList.add('disabled');
-					document.getElementById('guiTurnGetCard').removeAttribute('disabled');
-					document.getElementById('guiTurnChangeTable').removeAttribute('disabled');
+					document.getElementById('guiTurnGetCard').classList.remove('disabled');
+					document.getElementById('guiTurnChangeTable').classList.remove('disabled');
 					document.getElementById('guiUndoRefresh').classList.remove('disabled');
 				} else {
 					throw 'Setting player as active failed';
@@ -351,8 +338,8 @@
 		async function getGameInfo(render = false) {
 			console.log('method: getGameInfo');
 			if (!window.myTurn && !document.hidden) {
-				document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
-				document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
+				document.getElementById('guiTurnGetCard').classList.add('disabled');
+				document.getElementById('guiTurnChangeTable').classList.add('disabled');
 				document.getElementById('guiUndoRefresh').classList.add('disabled');
 				try {
 					const p = await postData({ action: 'getGameInfo', 'gameId': window.gameId, 'playerId': window.playerId, 'knownStateFrom': window.lastModifiedAt });
@@ -392,16 +379,16 @@
 						document.getElementById('guiGameJoin').classList.remove('disabled');
 						document.getElementById('guiRegPlayer').classList.add('disabled');
 						document.getElementById('gameOver').classList.toggle('visible');
-						document.getElementById('guiTurnGetCard').setAttribute('disabled', true);
-						document.getElementById('guiTurnChangeTable').setAttribute('disabled', true);
+						document.getElementById('guiTurnGetCard').classList.add('disabled');
+						document.getElementById('guiTurnChangeTable').classList.add('disabled');
 						document.getElementById('guiUndoRefresh').classList.add('disabled');
 					}
 				} catch (err) {
 					console.dir('err', err);
 				}
 			} else {
-				document.getElementById('guiTurnGetCard').removeAttribute('disabled');
-				document.getElementById('guiTurnChangeTable').removeAttribute('disabled');
+				document.getElementById('guiTurnGetCard').classList.remove('disabled');
+				document.getElementById('guiTurnChangeTable').classList.remove('disabled');
 				document.getElementById('guiUndoRefresh').classList.remove('disabled');
 			}
 		}
@@ -444,8 +431,11 @@
 			}
 		}
 
-		async function getCard() {
-			console.log('method: getCard');
+		async function getCard(e) {
+			console.log('method: getCard', e);
+			if (e) {
+				e.stopPropagation();
+			}
 			if (!window.gameStatus === 'playing') {
 				return;
 			}
@@ -547,8 +537,11 @@
 			}
 		}
 
-		async function doTableChange() {
-			console.log('method: doTableChange');
+		async function doTableChange(e) {
+			console.log('method: doTableChange', e);
+			if (e) {
+				e.stopPropagation();
+			}
 			if (!window.gameStatus === 'playing' || !window.myTurn) {
 				return;
 			}
@@ -875,38 +868,6 @@
 			showSuccess();
 		}
 
-		// several methods related to freagging main actions around screen 
-		var mouse1 = function(event) {
-			let shiftX = event.clientX - guiActions.getBoundingClientRect().left;
-			let shiftY = event.clientY - guiActions.getBoundingClientRect().top;
-			document.body.append(guiActions);
-			moveAt(event.pageX, event.pageY);
-
-			// moves the ball at (pageX, pageY) coordinates
-			// taking initial shifts into account
-			function moveAt(pageX, pageY) {
-				guiActions.style.left = pageX - shiftX + 'px';
-				guiActions.style.top = pageY - shiftY + 'px';
-			}
-
-			function onMouseMove(event) {
-				moveAt(event.pageX, event.pageY);
-			}
-
-			// move the ball on mousemove
-			document.addEventListener('mousemove', onMouseMove);
-
-			// drop the ball, remove unneeded handlers
-			guiActions.onmouseup = function() {
-				document.removeEventListener('mousemove', onMouseMove);
-				guiActions.onmouseup = null;
-			}
-		}
-
-		var mouse2 = function() {
-			return false;
-		}
-
 	</script>
 </head>
 <body>
@@ -934,21 +895,25 @@
 
 		<div class="box hand">
 			<h6>Ruka</h6>
+			<div class='disabled' id='guiTurnGetCard' title='Vzít kartu'>
+				<img src="cards.svg#empty_empty">
+				<img src="cards.svg#empty_empty">
+				<img src="cards.svg#empty_empty">
+			</div>
 			<div id='guiHand'></div>
 		</div>
 
 		<div class="box table" onclick='createEmptySet()'>
 			<h6>Stůl</h6>
+			<div class='disabled' id='guiTurnChangeTable' title='Provést změny'>
+				<img src="validation.svg" width="100">
+			</div>
 			<div id='guiTable'></div>
 		</div>
 	</div>
 
 	<div id="turns"></div>
 
-	<div id="actions">
-		<button onclick='getCard()' id='guiTurnGetCard' disabled>&#10132; Vzít kartu</button> &nbsp; <span id='dragTarget'>&#8689;</span><br>
-		<button onclick='doTableChange()' id='guiTurnChangeTable' disabled>&#10148; Provést změny</button>
-	</div>
 	<div id="help">
 		<button onclick='document.getElementById("help").classList.toggle("visible")'>X</button>
 		<h2>Nápověda</h2>
@@ -1003,8 +968,6 @@ kupicku karet na brani? budik/hlavicka z recepce na dalsi tah
 obcas neni sestava na stole aktivni, ac by byt mela
 vyjimka na historii pro jednoho hrace at se nepta na historii 2 karet v ruce
 nabidnout vice variant hry
-akceptovat i opacne poradi karet
-lepsi blur/klavesy
 ukazat kolik karet zbyva v balicku
 ukazovat ktera sestava je nevalidni a proc
 Swap povolit jen na jokery - lepe
@@ -1019,4 +982,5 @@ vyresit ze dojdou karty uplne?
 preklady chyb a nezobrazuji se vsechny
 u hrace s moc dlouhym jmenem neni videt pocet karet
 spatny reset actives pri vice vymenach zoliku???
+vymena zoliku mezi linii a stejnyma se zolikem nefunguje, oboji na stole
 -->

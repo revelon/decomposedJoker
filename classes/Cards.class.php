@@ -54,7 +54,10 @@ class Cards implements \ArrayAccess, \Iterator, \Countable
 
     public function pushCard(Card $card) : void {
     	array_push($this->rows, $card);
-        //$this->sortCards(); do it better, later, somehow
+    }
+
+    public function unshiftCard(Card $card) : void {
+        array_unshift($this->rows, $card);
     }
 
     // return difference between this set a given array of selected cards

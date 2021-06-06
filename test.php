@@ -25,13 +25,18 @@ $play->setActivePlayer($pid);
 //new Cards(new Card(1, Card::SPADES), new Card(2, Card::SPADES), new Card(3, Card::SPADES));
 
 $newSet = Group::createSet(
+	new Cards(new Card(13, Card::SPADES), new Card(0, Card::WILD), new Card(11, Card::SPADES)), 
+	'dummy' );
+
+/*
+$newSet = Group::createSet(
 	new Cards(new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES)), 
 	'dummy' );
 
 $newSet = Group::createSet(
 	new Cards(new Card(0, Card::WILD), new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES)), 
 	'dummy' );
-/*
+
 $newSet = Group::createSet(
 	new Cards(new Card(0, Card::WILD), new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES)), 
 	'dummy' );
@@ -46,8 +51,8 @@ $newSet = Group::createSet(
 */
 
 
-$newSet->fillJokerReplacements($play->getDeck());
-var_dump($newSet); die();
+//$newSet->fillJokerReplacements($play->getDeck());
+var_dump($newSet, $dbgBuffer); die();
 
 //Group::tests(); 
 die($dbgBuffer);

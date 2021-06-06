@@ -39,6 +39,18 @@ class Game {
 		$p->addCardToHand($this->deck->popCard());
 		$p->addCardToHand($this->deck->popCard());
 
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+		$p->addCardToHand($this->deck->popCard());
+
 		$this->players[$p->getId()] = $p;
 		dbg("player set", $p);
 		return $p->getId();

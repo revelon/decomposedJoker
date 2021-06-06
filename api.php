@@ -158,12 +158,26 @@ switch ($data->action) {
 				$newSet->pushCard(new Card($c->value, $c->type, $c->id));
 			}
 			dbg('new set to validate', $newSet);
+			// assume sorting is ok, from lowest to highest
 			$g = Group::createSet($newSet, $grp->id);
 			if ($g instanceOf Group) {
 				$g->fillJokerReplacements($play->getDeck(true)); // merge with full deck !! temp solution
 				$table[] = $g;
 			} else {
 				$problem = $g; // instane of ValidationResult
+			}
+			// try again with reverted order and do it again, maybe player tried set like 4, 3, 2...
+			if ($problem) {
+				$newSet2 = new Cards();
+				foreach ($grp->cards as $c) {
+					$newSet2->unshiftCard(new Card($c->value, $c->type, $c->id));
+				}
+				$g2 = Group::createSet($newSet2, $grp->id);
+				if ($g2 instanceOf Group) {
+					$g2->fillJokerReplacements($play->getDeck(true)); // merge with full deck !! temp solution
+					$table[] = $g2;
+					$problem = null; // problem solved
+				}
 			}
 		}
 		if ($problem) {

@@ -132,6 +132,12 @@ class Group extends Cards {
 				return ValidationResult::get(false, 'joker-between-king-and-ace');
 			}
 
+			// wrong order of cards
+			if ($curr === 0 && isset($values[$i+1]) && $prev > $values[$i+1] && 
+				!(($prev === 12 && $values[$i+1] === 1) || ($prev === 13 && $values[$i+1] === 2))) {
+				return ValidationResult::get(false, 'wrong-card-order');
+			}
+
 			// joker combination is valid if line is starting only
 			if ($i < 3 && ($prev === 0 || $curr === 0)) {
 				continue;
