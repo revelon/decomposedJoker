@@ -8,17 +8,19 @@
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
 		body {margin: 0px;}
 		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle; margin-bottom: 3px;}
-		div#guiHand div img, div#guiTable div img, div#results div div img {width: 70px; display: inline-block; cursor: pointer; margin-left: -18px; user-select: none; vertical-align: middle; margin-bottom: 3px; border-radius: 3px; background-color: White; }
+		div#guiHand div img, div#guiTable div img, div#results div div img {width: 70px; display: inline-block; cursor: pointer; margin-left: -18px; user-select: none; vertical-align: middle; margin-bottom: 3px; border-radius: 3px; background-color: White; color: Green;}
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
 		div img.normal {transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
+		div#guiTable div img.empty {opacity: 0.33;}
 		div div.active, div img.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
 		div div.changed, div img.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black);}
 		div#guiTable div.invalid {filter: drop-shadow(2px 2px 8px Red);}
-		div#guiTurnGetCard img {margin-left: -67px; width: 70px; display: inline-block; overflow: auto;}
+		div#guiTurnGetCard img {margin-left: -67px; width: 66px; display: inline-block; overflow: auto;}
 		div#guiTurnGetCard img:first-of-type {margin-left: 0 !important;}
-		div#guiTurnChangeTable, div#guiTurnGetCard {float: right; cursor: cell;}
-		div#guiTurnChangeTable:hover, div#guiTurnGetCard:hover {filter: contrast(200%);}
+		div#guiTurnChangeTable, div#guiTurnGetCard {float: right; cursor: cell; white-space: nowrap;}
+		div#guiTurnChangeTable:hover, div#guiTurnGetCard:hover {filter: contrast(200%); filter: drop-shadow(2px 2px 12px Gold);}
+		div#guiTurnGetCard span {display: inline-block; margin-left: -25px; color: White; }
 
 		/* clusmy attempt of dynamic scaling based on number of cards in the set */
 		div#guiTable div.c6 div {margin-left: -4px;}
@@ -49,14 +51,13 @@
 		div.menu img {width: 128px; margin: 0px auto; display: block;}
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
 		div#guiTable > div, div#guiHand > div {margin-top: 12px; display: inline-block; margin-left: 20px;}
+		div#guiHand > div {width: calc(99% - 100px);}
 		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#help, div#gameOver {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
 		div#help.visible, div#gameOver.visible {display: block; opacity: 0.9;}
 		div#help button, div#gameOver button {float: right;}
 		div#turns {font-size: 0.85em; position: fixed; left: 0.85%; top: 1%; color: White;}
-		div#actions {font-size: 1.6em; position: fixed; left: 68%; top: 80%;}
-		div#actions button {background-color: Beige; filter: drop-shadow(2px 2px 12px Gold); border-radius: 8px; padding: 6px; margin-bottom: 3px; cursor: pointer;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
 		div#guiMessages {position: fixed; left: 20%; top: 70%; right: 20%;}
 		.disabled {color: Gray; pointer-events: none; opacity: 0.5;}
@@ -97,7 +98,7 @@
 		var myTurn = false; // flag if it is this player's turn or not
 		var tick; // holder for refresing/ticking setInterval object
 		var lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
-		var renderCardsAsImg = false;		
+		var renderCardsAsImg = false;
 		var guiHand;
 		var guiTable;
 		var guiPlayers;
@@ -210,12 +211,12 @@
 				}
 			}
 			if (e.code == 'Space') {
-				if (!document.getElementById('guiTurnGetCard').contains('disabled')) {
+				if (!document.getElementById('guiTurnGetCard').classList.contains('disabled')) {
 					getCard();
 				}
 			}
 			if (e.code == 'Enter') {
-				if (!document.getElementById('guiTurnChangeTable').contains('disabled')) {
+				if (!document.getElementById('guiTurnChangeTable').classList.contains('disabled')) {
 					doTableChange();
 				}
 			}
@@ -350,6 +351,7 @@
 					window.players = p.players;
 					window.myTurn = p.amIActivePlayer;
 					window.lastModifiedAt = p.lastModifiedAt;
+					document.getElementById('cardsInDeck').innerText = p.cardsInDeck;
 					document.getElementById('turns').innerText = p.turns;
 					console.dir('players and gameStatus', window.players, window.gameStatus);
 					showSuccess();
@@ -874,7 +876,7 @@
 
 	<div class="wrapper">
 		<div class="box menu">
-			<img src="joker.svg" alt="Joker" onclick="changeCardLook()">
+			<img src="joker.svg" alt="Rozkládaný žolík" onclick="changeCardLook()">
 			<h1>Rozkládaný žolík</h1>
 
 			<button onclick='initGame()' id='guiGameInit'>&#9863; Založit hru</button>
@@ -896,9 +898,10 @@
 		<div class="box hand">
 			<h6>Ruka</h6>
 			<div class='disabled' id='guiTurnGetCard' title='Vzít kartu'>
-				<img src="cards.svg#empty_empty">
-				<img src="cards.svg#empty_empty">
-				<img src="cards.svg#empty_empty">
+				<img src="cards.svg#empty_empty" alt="Balíček karet">
+				<img src="cards.svg#empty_empty" alt="Balíček karet">
+				<img src="cards.svg#empty_empty" alt="Balíček karet">
+				<span id="cardsInDeck">**</span>
 			</div>
 			<div id='guiHand'></div>
 		</div>
@@ -906,7 +909,7 @@
 		<div class="box table" onclick='createEmptySet()'>
 			<h6>Stůl</h6>
 			<div class='disabled' id='guiTurnChangeTable' title='Provést změny'>
-				<img src="validation.svg" width="100">
+				<img src="validation.svg" width="86" alt="Provést změny">
 			</div>
 			<div id='guiTable'></div>
 		</div>
@@ -929,8 +932,7 @@
 			<li>Probliknutí obrazovky modře signalizuje úspěch tahu aktuálního hráče, naopak probliknutí červeně signalizuje neúspěch.</li>
 			<li>Karty které jsou <b>uskočeny směrem dolů</b> jsou ty, které byly nedávno <b>změněny</b>.</li>
 			<li>Pokud se hráč dostane do stavu, kdy na stole udělal změny, které se nedají dokončit nebo se nedaří zvalidovat, může se vrátit na začátek svého tahu a <b>obnovit</b> jeho počáteční stav.</li>
-			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění. Novou hru je po skončení předchozí možno spustit znovu, již bez potřeby zadávání kódu.</li>
-			<li>Pokud tlačítka <b>Vzít kartu</b> a <b>Provést změny</b> překáží nebo jsou na nevhodném místě, je možné je za šipku vedle nich <b>přetáhnout</b> na obrazovce na libovolné místo.</li>
+			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění. Novou hru je po skončení předchozí možno spustit znovu, již bez potřeby zadávání nového kódu.</li>
 			<li><b>klávesa A</b> = pokud chce hráč po vyložení své první validní sestavy měnit i sestavy již vyložené jinými hráči na stole, obojí v jediném tahu.</li>
 			<li><b>klávesa S</b> = pokud jsou označeny právě dvě karty, žolík v existující sestavě a karta namísto něj do sestavy, provede se jejich výměna.</li>
 			<li><b>klávesa Mezerník</b> = alternativní zkratka pro <b>Vzít si další kartu</b></li>
@@ -952,25 +954,20 @@
 
 <!--
 vyresit lepe zamky na fakt, ze nekdo muze chtit v jednom kole pripravit set a rovnou dokladat (poprve); da se podvadet preskladanim do nove groupy !!
-4 z druhu jdou rozebrat i kdyz neni nahrada za jokera - podvadeni
 vubec neposilat na validaci sestavy kratsi 3 karet
-joker v ruce hlaska na GUI, mozna i jine hlasky zobrazovat, co se stalo...
 kontrolovat v API konzistentne a vzdy ze je hra OK
 pridat server side logovani chyb
 zahajit hru vzetim karty?
 pridat nahodny GC na promazavani starych her
 zajistit i reset canModifyTable po resetu - podvadeni
-dynamicka delka sestav
 reset results pridat pri nove hre - je to historie?
-esc na zavreni konce hry
+esc na zavreni konec hry - logout
 resetovat actives ?
-kupicku karet na brani? budik/hlavicka z recepce na dalsi tah
 obcas neni sestava na stole aktivni, ac by byt mela
 vyjimka na historii pro jednoho hrace at se nepta na historii 2 karet v ruce
 nabidnout vice variant hry
-ukazat kolik karet zbyva v balicku
 ukazovat ktera sestava je nevalidni a proc
-Swap povolit jen na jokery - lepe
+Swap povolit jen na jokery - ale lepe
 Udelat neco jako A povoleni/validaci na hrace a tah, ze ziska jednorazovy permission rozebrat sestavu s zolikem - upravit i pro dnesni A !!
 Dat ruku dolu a otocit poradi na stole
 Zkusit vejirky z karet
@@ -979,8 +976,11 @@ funkcni i na mobilu
 karta po dvojitem switchi v ruce zustava blbe sortovana dokud si nevezmu znovu ze serveru
 nova hra po dohrani jednoduseji
 vyresit ze dojdou karty uplne?
-preklady chyb a nezobrazuji se vsechny
+preklady chyb a nezobrazuji se vsechny 
 u hrace s moc dlouhym jmenem neni videt pocet karet
 spatny reset actives pri vice vymenach zoliku???
 vymena zoliku mezi linii a stejnyma se zolikem nefunguje, oboji na stole
+pozor na cross browser kompatibilitu SVG
+zkusit jiny font do karet!!
+rozsirit testy
 -->

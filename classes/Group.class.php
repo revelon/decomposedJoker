@@ -245,6 +245,10 @@ class Group extends Cards {
 		asserts("Invalid row over ace rewing and joker", 
 				Group::validate(new Cards( new Card(13, Card::CLUBS), new Card(0, Card::WILD), new Card(1, Card::CLUBS) ))->success,
 				false);
+		asserts("Invalid row with reversed order", 
+		Group::validate(new Cards( new Card(13, Card::CLUBS), new Card(0, Card::WILD), new Card(11, Card::CLUBS) ))->success,
+				false);
+
 	}
 
 }
