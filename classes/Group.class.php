@@ -64,7 +64,7 @@ class Group extends Cards {
 						$this->lineJokerReplacements[$card->getId()] = new Replacement($card->getId(), $deck->getCardsByType($this->rows[$i+1]->type, $this->rows[$i+1]->value - 1));
 					}
 				} else if ($i > 0 && $card->type === Card::WILD) { // we will decide on previous card base
-					if (($this->rows[$i-1]->value + 1) === 0) { // special rewind case => so pick Ace/1 instead
+					if (($this->rows[$i-1]->value + 1) === 14) { // special rewind case => so pick Ace/1 instead
 						$this->lineJokerReplacements[$card->getId()] = new Replacement($card->getId(), $deck->getCardsByType($this->rows[$i-1]->type, 1));
 					} else {
 						$this->lineJokerReplacements[$card->getId()] = new Replacement($card->getId(), $deck->getCardsByType($this->rows[$i-1]->type, $this->rows[$i-1]->value + 1));

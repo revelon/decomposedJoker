@@ -200,6 +200,10 @@ class Game {
 					if ($set->id === $newSet->id) { // find if the set still exists on new table
 						foreach ($jokers as $j) { // check presence of the same previous joker by id
 							if (!in_array($j->getId(), $newSet->getCardIds())) {
+								
+								## debug !!!
+								//if (! isset($set->lineJokerReplacements[$j->getId()]->cards[0])) die(var_dump($set));
+
 								// and if not there, try to find its replacements elsewhere on the new table
 								if ($newTable->isCardPresent($set->lineJokerReplacements[$j->getId()]->cards[0]->getId()) || 
 								$newTable->isCardPresent($set->lineJokerReplacements[$j->getId()]->cards[1]->getId())) {

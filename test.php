@@ -4,7 +4,6 @@ require('./sys.php');
 
 //phpinfo(); die;
 
-
 echo "creating game\n";
 $play = new Game('abcd');
 $play->startNewGame();
