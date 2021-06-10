@@ -94,7 +94,7 @@
 		var table = []; // playing table with validated sets of cards (server side)
 		var lastTableCards = {a: [], b: []}; // previous table's cards history, last two changes
 		var actives = []; // stack of currently selected cards (to create new set or append to existing one)
-		var gameStatus = 'inactive'; // current game status: inactive | playing | finished
+		var gameStatus = 'inactive'; // current game status: inactive | playing | finished | restarting
 		var myTurn = false; // flag if it is this player's turn or not
 		var tick; // holder for refresing/ticking setInterval object
 		var lastModifiedAt = 0; // unix timestamp of the last time server side game has been modified
@@ -259,7 +259,7 @@
 			console.log('method: initHelperReset');
 
 			window.allCards = {}; // all current game cards in the full deck
-			window.playerId = ''; // current player secret identifier
+			//window.playerId = ''; // current player secret identifier
 			//window.gameId = ''; // current game ID
 			window.canModifyTable = false; // flag, if user already made one full set and can add cards to other sets
 			window.players = {}; // all players involved in current game
@@ -329,6 +329,37 @@
 					document.getElementById('guiUndoRefresh').classList.remove('disabled');
 				} else {
 					throw 'Setting player as active failed';
+				}
+			} catch (err) {
+				console.dir('err', err);
+				showFailure();
+			}
+		}
+
+		async function restartGame() {
+			console.log('method: restartGame');
+			try {
+				if (await postData({ action: 'restartGame', 'gameId': window.gameId, 'playerId': window.playerId })) {
+					console.dir('restartGame', true);
+					initHelperReset();
+					const deck = await postData({ action: 'getGameCards', 'gameId': window.gameId });
+					await initHelperReset();
+					deck.forEach(c => window.allCards[c.id] = c);
+					window.allCards['empty'] = {id: '', value: 'empty', type: 'empty'}; // case for rendering empty card
+					initHelper();
+					await getHand();
+					await getTable();
+					await getServerState();
+					document.getElementById('guiGameRestart').blur();
+					document.getElementById("gameOver").classList.remove('visible');
+					document.getElementById('guiGameInit').classList.add('disabled');
+					document.getElementById('guiGameJoin').classList.add('disabled');
+					document.getElementById('guiRegPlayer').classList.add('disabled');
+					document.getElementById('guiGameStart').classList.remove('disabled');
+					renderCardGroups(window.hand, window.guiHand, window.lastHandCards);
+					audioObj.play();
+				} else {
+					throw 'Restarting game failed';
 				}
 			} catch (err) {
 				console.dir('err', err);
@@ -624,7 +655,7 @@
 			if (e) {
 				e.stopPropagation();
 			}
-			if (window.gameStatus != 'playing' || !window.myTurn) {
+			if (window.gameStatus !== 'playing' || !window.myTurn) {
 				return;
 			}
 			console.log('method: createEmptySet');
@@ -882,7 +913,7 @@
 			<button onclick='initGame()' id='guiGameInit'>&#9863; Založit hru</button>
 			<button onclick='joinGame()' id='guiGameJoin'>&#9865; Připojit se</button>
 			<button onclick='registerPlayer()' id='guiRegPlayer' class='disabled'>&#8858; Registrovat hráče</button>
-			<button onclick='startGame()' id='guiGameStart' class='disabled'>&#128571; Zahájit hru</button>
+			<button onclick='startGame()' id='guiGameStart' class='disabled'>&#9734; Zahájit hru</button>
 			<button onclick='getServerState(true)' id='guiUndoRefresh' class='disabled'>&#8634; Obnovit (Zpět)</button>
 			<button onclick='document.getElementById("help").classList.toggle("visible")'>? Nápověda</button>
 			
@@ -942,6 +973,7 @@
 
 	<div id="gameOver">
 		<button onclick='document.getElementById("gameOver").classList.toggle("visible")'>X</button>
+		<button onclick='restartGame()' id='guiGameRestart'>&#9775; Hrát znovu</button>
 		<h1>!! Konec hry !!</h1>
 		<hr>
 		<div id="results"></div>
@@ -983,4 +1015,14 @@ vymena zoliku mezi linii a stejnyma se zolikem nefunguje, oboji na stole
 pozor na cross browser kompatibilitu SVG
 zkusit jiny font do karet!!
 rozsirit testy
+neprekryvat posledni karty empty?
+vice vysvitit zmenenou kartu
+vice ukazat aktivni hrace
+odebrat cary z 11-13
+lepe konec hry
+neotacime poradi 1 J Q !!
+moznost logoutu / odchodu hrace ze hry...
+obcas nema nova sestava spravna prava na zapis/prikladani dalsim hracem
+Warning: Undefined array key 0 in /Users/revelon/git/decomposedJoker/classes/Game.class.php on line 204
+Fatal error: Uncaught Error: Call to a member function getId() on null in /Users/revelon/git/decomposedJoker/classes/Game.class.php:204
 -->

@@ -28,6 +28,10 @@ $newSet = Group::createSet(
 	new Cards(new Card(13, Card::SPADES), new Card(0, Card::WILD), new Card(11, Card::SPADES)), 
 	'dummy' );
 
+$newSet = Group::createSet(
+	new Cards( new Card(1, Card::CLUBS), new Card(0, Card::WILD), new Card(12, Card::CLUBS)), 
+	'aaaa' );
+
 /*
 $newSet = Group::createSet(
 	new Cards(new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES)), 
@@ -52,7 +56,7 @@ $newSet = Group::createSet(
 
 
 //$newSet->fillJokerReplacements($play->getDeck());
-var_dump($newSet, $dbgBuffer); die();
+var_dump($dbgBuffer, $newSet); die();
 
 //Group::tests(); 
 die($dbgBuffer);

@@ -45,7 +45,7 @@ switch ($data->action) {
 		mylog('CASE getGameCards start');
 		$play = Game::load($data->gameId);
 		mylog('CASE getGameCards data loaded');
-		if ($play && $play->status === 'inactive') {
+		if ($play && ($play->status === 'inactive' || $play->status === 'restarting')) {
 			$givenCards = $play->getCardsInPlayersHands();
 			echo json_encode( [ 'data' => array_merge($givenCards, $play->getDeck()->getCards()), 'dbg' => $dbgBuffer ] );
 		} else {
@@ -57,7 +57,7 @@ switch ($data->action) {
 		mylog('CASE registerPlayer start');
 		$play = Game::load($data->gameId);
 		mylog('CASE registerPlayer data loaded');
-		if ($play && $play->status === 'inactive') {
+		if ($play && ($play->status === 'inactive' || $play->status === 'restarting')) {
 			$pid = $play->assignPlayer($data->name);
 			if ($pid) {
 				$play->save();
@@ -199,6 +199,22 @@ switch ($data->action) {
 			http_response_code(403);
 			echo json_encode( [ 'message' => 'Table or player hand is invalid / ' . $result->message, 
 				'invalidGroupId' => $result->groupId, 'dbg' => $dbgBuffer ] );
+		}
+		break;
+	case "restartGame":
+		mylog('CASE restartGame start');
+		$play = Game::load($data->gameId);
+		mylog('CASE restartGame data loaded');
+		if ($play && $play->getPlayerCopy($data->playerId)) {
+			if ($play->status !== 'restarting') { // only the first attempt of first player to restart is accepted
+				$play->restartGame();
+				$play->save();
+				mylog('CASE restartGame data saved');
+			}
+			echo json_encode( [ 'data' => true, 'dbg' => $dbgBuffer ] );
+		} else {
+			http_response_code(403);
+			echo json_encode( [ 'message' => 'Player is not allowed to restart game.', 'dbg' => $dbgBuffer ] ); 
 		}
 		break;
 }

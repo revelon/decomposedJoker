@@ -8,10 +8,16 @@ class Player {
 	public bool $canAddCards = false; // activated after first winished set
 	public bool $won = false;
 
-	function __construct(string $name) {
+	public function __construct(string $name) {
 		$this->name = $name;
 		$this->hand = new Cards();
 		$this->id = bin2hex(random_bytes(8));
+	}
+
+	public function reset() {
+		$this->hand = new Cards();
+		$this->canAddCards = false;
+		$this->won = false;
 	}
 
 	public function getId() : string {

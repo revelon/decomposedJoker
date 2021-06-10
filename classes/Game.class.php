@@ -8,7 +8,7 @@ class Game {
 	private ?Cards $fullDeck = null; // temporary solution, solve in better way later!!
 	private ?Table $table = null;
 	private string $activePlayer = '';
-	public string $status = 'inactive'; // inactive | playing | finished
+	public string $status = 'inactive'; // inactive | playing | finished | restarting
 	public int $turns = 0;
 
 	function __construct(string $gameId) {
@@ -23,6 +23,22 @@ class Game {
 		$this->deck = $this->createDeck();
 		$this->fullDeck = clone $this->deck;
 		$this->table = new Table();
+		$this->turns = 0;
+		$this->activePlayer = '';
+		$this->status = 'inactive';
+	}
+
+	public function restartGame() {
+		$this->startNewGame();
+		foreach ($this->players as $plr) {
+			$plr->reset();
+			$plr->addCardToHand($this->deck->popCard());
+			$plr->addCardToHand($this->deck->popCard());
+			$plr->addCardToHand($this->deck->popCard());
+			$plr->addCardToHand($this->deck->popCard());
+			$plr->addCardToHand($this->deck->popCard());
+		}
+		$this->status = 'restarting';
 	}
 
 	public function assignPlayer(string $name) : string {
@@ -33,18 +49,6 @@ class Game {
 			}
 		}
 		$p = new Player(trim($name));
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-		$p->addCardToHand($this->deck->popCard());
-
 		$p->addCardToHand($this->deck->popCard());
 		$p->addCardToHand($this->deck->popCard());
 		$p->addCardToHand($this->deck->popCard());
@@ -307,7 +311,7 @@ class Game {
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),
 			new Card(0,	Card::WILD),
-			
+
 			new Card(1, Card::SPADES),
 			new Card(2, Card::SPADES),
 			new Card(3, Card::SPADES),

@@ -138,6 +138,10 @@ class Group extends Cards {
 				return ValidationResult::get(false, 'wrong-card-order');
 			}
 
+			if ($curr === 0 && isset($values[$i+1]) && $prev === 1 && $values[$i+1] == 12) {
+				return ValidationResult::get(false, 'wrong-card-order');
+			}
+
 			// joker combination is valid if line is starting only
 			if ($i < 3 && ($prev === 0 || $curr === 0)) {
 				continue;
@@ -246,9 +250,11 @@ class Group extends Cards {
 				Group::validate(new Cards( new Card(13, Card::CLUBS), new Card(0, Card::WILD), new Card(1, Card::CLUBS) ))->success,
 				false);
 		asserts("Invalid row with reversed order", 
-		Group::validate(new Cards( new Card(13, Card::CLUBS), new Card(0, Card::WILD), new Card(11, Card::CLUBS) ))->success,
+			Group::validate(new Cards( new Card(13, Card::CLUBS), new Card(0, Card::WILD), new Card(11, Card::CLUBS) ))->success,
 				false);
-
+		asserts("Invalid row with reversed order II.", 
+			Group::validate(new Cards( new Card(1, Card::CLUBS), new Card(0, Card::WILD), new Card(12, Card::CLUBS) ))->success,
+				false);
 	}
 
 }
