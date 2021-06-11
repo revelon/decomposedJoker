@@ -12,7 +12,7 @@
 		div div.normal {border: 1px solid Black; transform: translateY(0);}
 		div img.normal {transform: translateY(0);}
 		div#guiTable div div.empty {border: 1px dashed #bbb; transform: translateY(0); padding: 0; background-image: url(space.svg); background-repeat: no-repeat; background-size: cover;}
-		div#guiTable div img.empty {opacity: 0.33;}
+		div#guiTable div img.empty {opacity: 0.17;}
 		div div.active, div img.active {filter: drop-shadow(-4px 4px 1px Black); background-color: LightCyan !important; transform: translateY(-8px) !important;}
 		div div.changed, div img.changed {transform: translateY(8px) !important; filter: drop-shadow(-4px 4px 1px Black);}
 		div#guiTable div.invalid {filter: drop-shadow(2px 2px 8px Red);}
@@ -47,8 +47,8 @@
 		div > p:nth-of-type(1) {text-align: left;}
 		div > p:nth-of-type(2) {text-align: center;}
 		div > p:nth-of-type(3) {text-align: right;}
-		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 1.8em;}
-		div.menu img {width: 128px; margin: 0px auto; display: block;}
+		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 2vw; text-align: center;}
+		div.menu img {width: 75%; margin: 0px auto; display: block;}
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
 		div#guiTable > div, div#guiHand > div {margin-top: 12px; display: inline-block; margin-left: 20px;}
 		div#guiHand > div {width: calc(99% - 100px);}
@@ -60,16 +60,16 @@
 		div#turns {font-size: 0.85em; position: fixed; left: 0.85%; top: 1%; color: White;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
 		div#guiMessages {position: fixed; left: 20%; top: 70%; right: 20%;}
-		.disabled {color: Gray; pointer-events: none; opacity: 0.5;}
+		.disabled {color: Gray; pointer-events: none; opacity: 0.4;}
 
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.7; font-weight: lighter; padding: 0; margin: -17px 0 0 -2px;}
 		/* main layout */
-		div.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(4, [row] auto ); width: 100vw; height: 100vh;}
+		div.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(5, [row] auto ); width: 100vw; height: 100vh;}
 		div.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
-		div.menu {grid-column: col; grid-row: row / span 2;}
-		div.players {grid-column: col; grid-row: row 3 / span 2;}
-		div.hand {grid-column: col 2 / span 4; grid-row: row;}
-		div.table {grid-column: col 2 / span 4; grid-row: row 2 / span 3;}
+		div.menu {grid-column: col 1; grid-row: row 1 / span 3;}
+		div.players {grid-column: col 1; grid-row: row 4 / span 2;}
+		div.hand {grid-column: col 2 / span 4; grid-row: row 1 / span 2;}
+		div.table {grid-column: col 2 / span 4; grid-row: row 3 / span 3;}
 
 		@keyframes disappear { /* clean up the mess later */
 		  0% {display: block; visibility: visible; opacity: 0; margin-top: 100px; height: 24px;}
@@ -1006,24 +1006,17 @@ Zkusit vejirky z karet
 Dat jmeno hrace k ruce a zvetsit oblast hracu
 funkcni i na mobilu
 karta po dvojitem switchi v ruce zustava blbe sortovana dokud si nevezmu znovu ze serveru
-nova hra po dohrani jednoduseji
 vyresit ze dojdou karty uplne?
 preklady chyb a nezobrazuji se vsechny 
 u hrace s moc dlouhym jmenem neni videt pocet karet
 spatny reset actives pri vice vymenach zoliku???
 vymena zoliku mezi linii a stejnyma se zolikem nefunguje, oboji na stole
-pozor na cross browser kompatibilitu SVG
-zkusit jiny font do karet!!
 rozsirit testy
 neprekryvat posledni karty empty?
 vice vysvitit zmenenou kartu
 vice ukazat aktivni hrace
-odebrat cary z 11-13
 lepe konec hry
-neotacime poradi 1 J Q !!
 moznost logoutu / odchodu hrace ze hry...
 obcas nema nova sestava spravna prava na zapis/prikladani dalsim hracem
-Warning: Undefined array key 0 in /Users/revelon/git/decomposedJoker/classes/Game.class.php on line 204
-Fatal error: Uncaught Error: Call to a member function getId() on null in /Users/revelon/git/decomposedJoker/classes/Game.class.php:204
-cerstve vymeneny zolik hned k jine sestave => chyba 500
+na mobilu alternativu pro A a S
 -->
