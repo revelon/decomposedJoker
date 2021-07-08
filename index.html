@@ -55,7 +55,7 @@
 		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#help, div#gameOver {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
-		div#help.visible, div#gameOver.visible {display: block; opacity: 0.9;}
+		div#help.visible, div#gameOver.visible {display: block; opacity: 0.8;}
 		div#help button, div#gameOver button {float: right;}
 		div#turns {font-size: 0.85em; position: fixed; left: 0.85%; top: 1%; color: White;}
 		button {display: inline-block; vertical-align: middle; background-color: Gold; font-size: 1.2em; border-radius: 6px; margin: 2px; font-family: serif;}
@@ -961,6 +961,7 @@
 			<li>Nová sestava na stole vznikne vždy při kliknutí na prázdné místo na stole. Jsou-li v tu chvíli již <b>označeny</b> některé karty, rovnou se do ní <b>přidají</b>.</li>
 			<li><b>Dokládat</b> označené karty k sestavám zleva nebo zprava lze <b>kliknutím na prázdnou pozici</b> vlevo nebo vpravo.</li>
 			<li>Probliknutí obrazovky modře signalizuje úspěch tahu aktuálního hráče, naopak probliknutí červeně signalizuje neúspěch.</li>
+			<li>Sestava na stole se žolíkem = bez náhrady žolíka za platnou kartu není dovoleno stěhovat žolíka do nové nebo jiné herní sestavy. Je-li potřeba <b>sestavu "roztrhnout"</b>, ponechejte vždy žolík v původní sestavě na stole!</li>
 			<li>Karty které jsou <b>uskočeny směrem dolů</b> jsou ty, které byly nedávno <b>změněny</b>.</li>
 			<li>Pokud se hráč dostane do stavu, kdy na stole udělal změny, které se nedají dokončit nebo se nedaří zvalidovat, může se vrátit na začátek svého tahu a <b>obnovit</b> jeho počáteční stav.</li>
 			<li>Pokud hra skončí, zobrazí se výherci i všem hráčům upozornění. Novou hru je po skončení předchozí možno spustit znovu, již bez potřeby zadávání nového kódu.</li>
@@ -1019,4 +1020,9 @@ lepe konec hry
 moznost logoutu / odchodu hrace ze hry...
 obcas nema nova sestava spravna prava na zapis/prikladani dalsim hracem
 na mobilu alternativu pro A a S
+pruhlednejsi konec hry
+uspornejsi dokladaci prostory vlevo a vpravo u grafickych karet
+uplne zmizely karty, ve hre jsou 3 srdcove osmicky !! zdvoji se sestava stejnych karet, obcas !! po pokusu o rozcasnuti dlouhe sestavy se zolikem
+lowercasovat kod hry vzdy
+nelibi se mu sestava kulova dama kral eso zolik 3 (ani bez te trojky)
 -->

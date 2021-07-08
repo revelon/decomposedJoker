@@ -162,6 +162,12 @@ class Group extends Cards {
 				continue;
 			}
 
+			// known valid set
+			if ($i > 2 && $curr === 0 && $values[$i-2] === 13 && $prev === 1) {
+				continue;
+			}
+
+
 			// solve rewind case
 			if ($prev === 13 && $curr === 1) {
 				continue;
@@ -174,6 +180,12 @@ class Group extends Cards {
 	}	
 
 	public static function tests() : void {
+		asserts("Valid line of cards with Joker", 
+				Group::validate(new Cards( new Card(12, Card::SPADES), new Card(13, Card::SPADES), new Card(1, Card::SPADES), new Card(0, Card::WILD) ))->success, 
+				true);
+		asserts("Valid line of cards with Joker", 
+				Group::validate(new Cards( new Card(12, Card::SPADES), new Card(13, Card::SPADES), new Card(1, Card::SPADES), new Card(0, Card::WILD), new Card(3, Card::SPADES) ))->success, 
+				true);
 		asserts("Not enough cards", 
 				Group::validate(new Cards( new Card(1, Card::SPADES), new Card(3, Card::SPADES) ))->success, 
 				false);
