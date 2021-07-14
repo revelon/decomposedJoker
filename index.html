@@ -6,6 +6,7 @@
 	<link rel="icon" type="image/png" href="favicon.ashx">
 	<style>
 		html {background: radial-gradient(circle, rgb(166,221,129) 13%, rgb(37,152,53) 84%); height:100%; color: White; font-family: serif;}
+		html {background-color: red; height:100%; color: Black; font-family: sans-serif;}
 		body {margin: 0px;}
 		div#guiHand div div, div#guiTable div div, div#results div div div {width: 38px; height: 74px; display: inline-block; overflow: hidden; cursor: pointer; margin-left: 2px; border-radius: 4px; user-select: none; padding: 2px; font-size: 1.4em; vertical-align: middle; margin-bottom: 3px;}
 		div#guiHand div img, div#guiTable div img, div#results div div img {width: 70px; display: inline-block; cursor: pointer; margin-left: -18px; user-select: none; vertical-align: middle; margin-bottom: 3px; border-radius: 3px; background-color: White; color: Green;}
@@ -48,11 +49,9 @@
 		div > p:nth-of-type(2) {text-align: center;}
 		div > p:nth-of-type(3) {text-align: right;}
 		h1 {text-align: center; margin: 3px; padding: 1px; font-size: 2vw; text-align: center;}
-		div.menu img {width: 75%; margin: 0px auto; display: block;}
 		h3 {font-size: 1.1em; text-align: left; color: Pink; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 5px auto;}
 		div#guiTable > div, div#guiHand > div {margin-top: 12px; display: inline-block; margin-left: 20px;}
 		div#guiHand > div {width: calc(99% - 100px);}
-		div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
 		div#help, div#gameOver {position: fixed; left: 5%; top: 5%; width: 80%; height: 80%; background-color: Beige; padding: 2em; color: Maroon; border-radius: 8px; border: 8px double Maroon; display: none; overflow: scroll;}
 		div#help ul {font-size: 1em; line-height: 150%; font-weight: normal;}
 		div#help.visible, div#gameOver.visible {display: block; opacity: 0.8;}
@@ -64,12 +63,37 @@
 
 		h6 {font-style: italic; font-size: 1.1em; opacity: 0.7; font-weight: lighter; padding: 0; margin: -17px 0 0 -2px;}
 		/* main layout */
-		div.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(5, [row] auto ); width: 100vw; height: 100vh;}
-		div.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
-		div.menu {grid-column: col 1; grid-row: row 1 / span 3;}
-		div.players {grid-column: col 1; grid-row: row 4 / span 2;}
-		div.hand {grid-column: col 2 / span 4; grid-row: row 1 / span 2;}
-		div.table {grid-column: col 2 / span 4; grid-row: row 3 / span 3;}
+		@media (orientation: landscape) {
+			div.menu img {width: 75%; margin: 0px auto; display: block;}
+			div.menu button {width: 100%; padding: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}			
+
+			div.wrapper {display: grid; grid-gap: 0; grid-template-columns: repeat(5, [col] 19.9% ); grid-template-rows: repeat(5, [row] auto ); width: 100vw; height: 100vh;}
+			div.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 8px; margin: 5px;}
+			div.menu {grid-column: col 1; grid-row: row 1 / span 3;}
+			div.players {grid-column: col 1; grid-row: row 4 / span 2;}
+			div.hand {grid-column: col 2 / span 4; grid-row: row 1 / span 2;}
+			div.table {grid-column: col 2 / span 4; grid-row: row 3 / span 3;}
+		}
+		@media (orientation: portrait) {
+			div.menu img {width: 25%; margin: 0px auto; display: block;}
+			div.menu button {width: 96%; padding: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 0.9em;}			
+			/*div.wrapper {display: grid; grid-gap: 0; grid-template-columns: 0; grid-template-rows: repeat(auto-fit, minmax(100px,1fr));}*/
+			div.wrapper {display: grid; grid-gap: 0; grid-template-rows: 20% 10% 20% 1fr; grid-auto-flow: row;}
+			div.box {background-color: rgba(0,0,0,0.4); border-radius: 4px; padding: 0; margin: 0;}
+			div.menu {grid-column: col 1; grid-row: row 1; column-count: 2; column-gap: 0;}
+			div.players {grid-column: col 1; grid-row: row 2;}
+			div.hand {grid-column: col 1; grid-row: row 3;}
+			div.table {grid-column: col 1; grid-row: row 4; background-color: initial !important;}
+
+			div#guiHand div img, div#guiTable div img, div#results div div img {width: 46px;}
+			div#guiHand div div, div#guiTable div div, div#results div div div {width: 25px; height: 48px; font-size: initial !important;}
+			h6 {display: none;}
+			h3 {text-align: center !important; font-size: 1em;}
+			div#guiTurnChangeTable, div#guiTurnGetCard {transform: scale(.6);}
+			div#guiPlayers div {width: 95%; margin: 1px; padding: 1px; border-radius: 3px; font-size: 0.8em;}
+			div#guiPlayers {column-count: 3; column-gap: 1px;}
+			div#guiTable div div.empty {border: 1px dashed #111;}
+		}
 
 		@keyframes disappear { /* clean up the mess later */
 		  0% {display: block; visibility: visible; opacity: 0; margin-top: 100px; height: 24px;}
